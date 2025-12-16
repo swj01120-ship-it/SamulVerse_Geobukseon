@@ -29,6 +29,7 @@ TagManager:
   - SamplesInfoPanel
   - QDSUIToggleCheckboxRadio
   - Drum
+  - Hand
   layers:
   - Default
   - TransparentFX
