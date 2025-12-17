@@ -5,25 +5,25 @@ using UnityEngine;
 public class DrumHit : MonoBehaviour
 {
     public AudioSource drumSound;
-    public float minHitVelocity = 1f; // 최소 타격 속도
+    public float minHitVelocity = 1f;
     private float lastHitTime;
-    public float hitCooldown = 0.1f; // 연타 방지
+    public float hitCooldown = 0.1f;
 
-    void OnTriggerEnter(Collider other)
+    void OnTriggerEnter(Collider other) // OnCollisionEnter에서 변경
     {
-        if (other.CompareTag("Hand") && Time.time - lastHitTime > hitCooldown)
+        if (other.CompareTag("DrumStick") && Time.time - lastHitTime > hitCooldown)
         {
-            HandVelocity handVel = other.GetComponent<HandVelocity>();
+            DrumStickController stick = other.GetComponent<DrumStickController>();
 
-            if (handVel != null && handVel.currentVelocity > minHitVelocity)
+            if (stick != null && stick.currentVelocity > minHitVelocity)
             {
-                HitDrum(handVel.currentVelocity);
+                HitDrum(stick.currentVelocity, stick);
                 lastHitTime = Time.time;
             }
         }
     }
 
-    void HitDrum(float velocity)
+    void HitDrum(float velocity, DrumStickController stick)
     {
         // 사운드 재생
         if (drumSound != null)
@@ -32,7 +32,11 @@ public class DrumHit : MonoBehaviour
             drumSound.Play();
         }
 
-        // 콘솔 출력 (테스트용)
+        // 햅틱 진동
+        float hapticIntensity = Mathf.Clamp01(velocity / 10f);
+        stick.TriggerHaptic(hapticIntensity);
+
         Debug.Log("북 타격! 속도: " + velocity);
     }
 }
+

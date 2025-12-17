@@ -30,6 +30,7 @@ TagManager:
   - QDSUIToggleCheckboxRadio
   - Drum
   - Hand
+  - DrumStick
   layers:
   - Default
   - TransparentFX
