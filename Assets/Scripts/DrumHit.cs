@@ -36,6 +36,13 @@ public class DrumHit : MonoBehaviour
         float hapticIntensity = Mathf.Clamp01(velocity / 10f);
         stick.TriggerHaptic(hapticIntensity);
 
+        // 콤보 추가 (새로 추가)
+        ComboSystem comboSystem = FindObjectOfType<ComboSystem>();
+        if (comboSystem != null)
+        {
+            comboSystem.AddCombo();
+        }
+
         Debug.Log("북 타격! 속도: " + velocity);
     }
 }
