@@ -106,3 +106,7 @@ MonoBehaviour:
   crossFade: 0.15
   avoidImmediateRepeat: 1
   respectAnimatorSpeed: 1
+  startType: 0
+  firstStateName: 
+  firstTriggerName: 
+  noImmediateRepeat: 1
