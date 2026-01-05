@@ -73,3 +73,30 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+
+# ===== 대용량 파일 제외 (GitHub 100MB 제한) =====
+
+# 3D 모델 (로컬에만 보관)
+*.fbx
+*.obj
+*.blend
+*.ma
+*.mb
+
+# 오디오 파일 (로컬에만 보관)
+*.mp3
+*.wav
+*.ogg
+*.aiff
+
+# 비디오 파일
+*.mp4
+*.mov
+*.avi
+
+# 대용량 텍스처
+*.psd
+
+# Unity 패키지
+*.unitypackage
