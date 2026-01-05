@@ -199,30 +199,3 @@ chore: 빌드, 설정 파일 수정
 
 </div>
 ```
-
----
-
-## Step 2: 커밋 메시지 작성
-```
-페이지 하단:
-
-"Commit changes..." 버튼 위 입력창:
-
-Commit message:
-docs: Add comprehensive README.md
-
-Extended description (선택):
-Add project overview, features, tech stack, and development status
-```
-
----
-
-## Step 3: 커밋!
-```
-우측 상단:
-"Commit changes..." 버튼 클릭
-
-팝업에서:
-- Commit message 확인
-- "Commit directly to the main branch" 선택
-- "Commit changes" 클릭!
