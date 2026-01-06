@@ -1,21 +1,26 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Note : MonoBehaviour
 {
-    public float speed = 5f;
+    public float speed = 3f;
     public Vector3 targetPosition;
 
+    [Header("Drum Type")]
+    public string drumType = "Book"; // "Jung", "Jang", "Book", "Jing"
+
     [Header("Judgment")]
-    public float perfectWindow = 0.15f;
-    public float goodWindow = 0.35f;
+    public float perfectWindow = 0.3f;
+    public float goodWindow = 0.6f;
+    public float missWindow = 1.0f;
 
     [Header("State")]
     public bool hasBeenHit = false;
 
     private float previousDistance = float.MaxValue;
     private bool hasApproachedTarget = false;
+    private bool hasPassedTarget = false; // íƒ€ê²Ÿ ì§€ë‚˜ê°”ëŠ”ì§€ ì²´í¬
 
     public ParticleSystem destroyParticle;
 
@@ -27,7 +32,6 @@ public class Note : MonoBehaviour
         }
 
         previousDistance = Vector3.Distance(transform.position, targetPosition);
-
         Debug.Log($"Note created. Distance to target: {previousDistance:F2}m");
     }
 
@@ -35,7 +39,7 @@ public class Note : MonoBehaviour
     {
         if (hasBeenHit) return;
 
-        // Å¸°ÙÀ¸·Î ÀÌµ¿
+        // íƒ€ê²Ÿìœ¼ë¡œ ì´ë™
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
@@ -44,24 +48,36 @@ public class Note : MonoBehaviour
 
         float currentDistance = Vector3.Distance(transform.position, targetPosition);
 
-        // Å¸°Ù¿¡ °¡±î¿öÁö´Â ÁßÀÎÁö È®ÀÎ
+        // íƒ€ê²Ÿì— ê°€ê¹Œì›Œì§€ëŠ” ì¤‘ì¸ì§€ í™•ì¸
         if (currentDistance < previousDistance)
         {
             hasApproachedTarget = true;
         }
 
-        // ¡Ú Å¸°Ù¿¡ °¡±î¿öÁ³´Ù°¡ ¸Ö¾îÁö±â ½ÃÀÛÇÏ¸é Miss ¡Ú
-        if (hasApproachedTarget && currentDistance > previousDistance + 0.5f)
+        // íƒ€ê²Ÿì— ê°€ê¹Œì›Œì¡Œë‹¤ê°€ ë©€ì–´ì§€ê¸° ì‹œì‘ = ì§€ë‚˜ê°
+        if (hasApproachedTarget && currentDistance > previousDistance + 0.1f)
         {
-            Debug.Log($"MISS - Note passed target (distance: {currentDistance:F2}m)");
+            if (!hasPassedTarget)
+            {
+                hasPassedTarget = true;
+                Debug.Log($"[{drumType}] Note passed target zone");
+            }
+        }
+
+        //  íƒ€ê²Ÿì„ ì™„ì „íˆ ì§€ë‚˜ì³ì„œ missWindow ë°–ìœ¼ë¡œ ë‚˜ê°”ì„ ë•Œë§Œ Miss
+        if (hasPassedTarget && currentDistance > missWindow)
+        {
+            Debug.Log($"[{drumType}] AUTO MISS - passed target (distance: {currentDistance:F2}m > {missWindow:F2}m)");
             OnMiss();
             return;
         }
 
-        // Å¸°Ù¿¡ °ÅÀÇ µµ´ŞÇß´Âµ¥ ¾È ÃÆÀ¸¸é Miss
-        if (hasApproachedTarget && currentDistance < 0.3f)
+        // íƒ€ê²Ÿì— ë„ˆë¬´ ê°€ê¹Œì´ ë„ë‹¬ (goodWindow ì•ˆìª½ê¹Œì§€ ì™”ëŠ”ë°ë„ ì•ˆ ì³¤ìœ¼ë©´ Miss)
+        // ì´ì „: 0.3f â†’ ë„ˆë¬´ ë¹¡ë¹¡í•¨
+        // ìˆ˜ì •: goodWindowë³´ë‹¤ ì•ˆìª½ìœ¼ë¡œ ë“¤ì–´ì™”ì„ ë•Œ
+        if (hasApproachedTarget && currentDistance < goodWindow * 0.3f) // goodWindowì˜ 30%
         {
-            Debug.Log($"MISS - Note reached target without hit");
+            Debug.Log($"[{drumType}] AUTO MISS - too close without hit (distance: {currentDistance:F2}m)");
             OnMiss();
             return;
         }
@@ -74,12 +90,14 @@ public class Note : MonoBehaviour
         if (hasBeenHit) return;
         hasBeenHit = true;
 
-        // ¡Ú ÆÄÆ¼Å¬ Àç»ı ¡Ú
+        Debug.Log($"[{drumType}] Hit! Perfect: {isPerfect}");
+
+        // â˜… íŒŒí‹°í´ ì¬ìƒ â˜…
         if (destroyParticle != null)
         {
-            destroyParticle.transform.SetParent(null); // ºÎ¸ğ ÇØÁ¦
+            destroyParticle.transform.SetParent(null); // ë¶€ëª¨ í•´ì œ
             destroyParticle.Play();
-            Destroy(destroyParticle.gameObject, 2f); // 2ÃÊ ÈÄ »èÁ¦
+            Destroy(destroyParticle.gameObject, 2f); // 2ì´ˆ í›„ ì‚­ì œ
         }
 
         if (RhythmGameManager.Instance != null)
@@ -100,8 +118,9 @@ public class Note : MonoBehaviour
     void OnMiss()
     {
         if (hasBeenHit) return;
-
         hasBeenHit = true;
+
+        Debug.Log($"[{drumType}] MISS registered");
 
         if (RhythmGameManager.Instance != null)
         {
@@ -115,15 +134,19 @@ public class Note : MonoBehaviour
     {
         if (targetPosition != Vector3.zero)
         {
-            // Perfect ¹üÀ§
+            // Perfect ë²”ìœ„ (ë…¸ë€ìƒ‰)
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(targetPosition, perfectWindow);
 
-            // Good ¹üÀ§
+            // Good ë²”ìœ„ (ì´ˆë¡ìƒ‰)
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(targetPosition, goodWindow);
 
-            // ³ëÆ®¿¡¼­ Å¸°Ù±îÁö ¼±
+            // Miss ë²”ìœ„ (ë¹¨ê°„ìƒ‰)
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(targetPosition, missWindow);
+
+            // ë…¸íŠ¸ì—ì„œ íƒ€ê²Ÿê¹Œì§€ ì„ 
             Gizmos.color = Color.white;
             Gizmos.DrawLine(transform.position, targetPosition);
         }

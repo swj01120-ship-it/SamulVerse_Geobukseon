@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -17,6 +17,9 @@ public class BeatMapSpawner : MonoBehaviour
     public float noteSpeed = 5f;
     public float spawnOffset = 2f;
 
+    [Header("Spawn Control")]
+    public float stopSpawnBeforeSongEnd = 2f;
+
     [Header("Debug")]
     public bool showDebugInfo = true;
 
@@ -24,6 +27,10 @@ public class BeatMapSpawner : MonoBehaviour
     private BeatMapData beatMapData;
     private Queue<NoteData> upcomingNotes;
     private bool hasStarted = false;
+
+    //  스폰 제어 플래그 추가
+    private bool isSpawning = true;
+    private bool spawningComplete = false;
 
     void Start()
     {
@@ -73,24 +80,30 @@ public class BeatMapSpawner : MonoBehaviour
 
     IEnumerator SpawnFromBeatMap()
     {
-        // ���� ���� ���
+        // 음악 시작 대기
         yield return new WaitForSeconds(1f);
 
-        // MusicManager ���� Ȯ��
+        // MusicManager 시작 확인
         while (musicManager == null || musicManager.audioSource == null || !musicManager.audioSource.isPlaying)
         {
             yield return null;
         }
 
-        Debug.Log("Music started! Beginning note spawn...");
+        // 음악 길이 가져오기
+        float songLength = musicManager.audioSource.clip.length;
+        float stopSpawnTime = songLength - stopSpawnBeforeSongEnd;
 
-        // �� ù ��Ʈ���� �߰� ��� ��
+        Debug.Log($"Music started! Song length: {songLength:F2}s");
+        Debug.Log($"Will stop spawning at: {stopSpawnTime:F2}s (song end - {stopSpawnBeforeSongEnd}s)");
+
+
+        // ★ 첫 노트까지 추가 대기 ★
         if (beatMapData.notes.Count > 0)
         {
             float firstNoteTime = beatMapData.notes[0].time;
-            Debug.Log($"First note at {firstNoteTime:F2}s, waiting...");
+            
 
-            // ù ��Ʈ �ð��� spawnOffset���� ª���� ���
+            // 첫 노트 시간이 spawnOffset보다 짧으면 대기
             if (firstNoteTime < spawnOffset)
             {
                 float waitTime = spawnOffset - firstNoteTime + 0.5f;
@@ -101,11 +114,24 @@ public class BeatMapSpawner : MonoBehaviour
 
         hasStarted = true;
         int spawnedCount = 0;
+        int totalNotes = beatMapData.notes.Count;
 
-        while (upcomingNotes.Count > 0)
+        // ⭐ isSpawning 플래그 + 음악 시간 체크
+        while (upcomingNotes.Count > 0 && isSpawning)
         {
-            NoteData nextNote = upcomingNotes.Peek();
             float currentTime = musicManager.songPosition;
+
+            // ⭐ 음악 끝나기 2초 전이면 스폰 중단
+            if (currentTime >= stopSpawnTime)
+            {
+                int remainingNotes = upcomingNotes.Count;
+                Debug.Log($"★ Reached stop time ({stopSpawnTime:F2}s). Stopping spawn.");
+                Debug.Log($"★ Spawned {spawnedCount}/{totalNotes} notes. Skipped {remainingNotes} notes.");
+                spawningComplete = true;
+                yield break; // 코루틴 종료
+            }
+
+            NoteData nextNote = upcomingNotes.Peek();
 
             if (currentTime >= nextNote.time - spawnOffset)
             {
@@ -115,14 +141,17 @@ public class BeatMapSpawner : MonoBehaviour
 
                 if (showDebugInfo)
                 {
-                    Debug.Log($"[{spawnedCount}/{beatMapData.notes.Count}] Spawned {nextNote.type} at music {currentTime:F2}s (note time: {nextNote.time:F2}s) for drum {nextNote.drum}");
+                    Debug.Log($"[{spawnedCount}/{beatMapData.notes.Count}] Spawned {nextNote.type} at {currentTime:F2}s for drum {nextNote.drum}");
                 }
             }
 
             yield return null;
         }
+       
 
-        Debug.Log($"All notes spawned! Total: {spawnedCount}");
+        // ⭐ 스폰 완료 플래그 설정
+        spawningComplete = true;
+        Debug.Log($"Note spawning complete! Total spawned: {spawnedCount}/{totalNotes}");
     }
 
     void SpawnNote(NoteData noteData)
@@ -168,6 +197,13 @@ public class BeatMapSpawner : MonoBehaviour
         {
             note.speed = noteSpeed;
             note.targetPosition = targetPoints[drumIndex].position;
+
+            // ⭐ drumType 설정 (0=Jung, 1=Jang, 2=Book, 3=Jing)
+            string[] drumTypes = { "Jung", "Jang", "Book", "Jing" };
+            if (drumIndex < drumTypes.Length)
+            {
+                note.drumType = drumTypes[drumIndex];
+            }
         }
     }
 
@@ -268,6 +304,20 @@ public class BeatMapSpawner : MonoBehaviour
         }
 
         return baseTarget;
+    }
+
+    // 스폰 중단 메서드 (RhythmGameManager에서 호출)
+    public void StopSpawning()
+    {
+        isSpawning = false;
+        StopAllCoroutines();
+        Debug.Log("Note spawning stopped!");
+    }
+
+    // 스폰 완료 여부 확인 (RhythmGameManager에서 호출)
+    public bool IsSpawningComplete()
+    {
+        return spawningComplete;
     }
 
     void OnGUI()

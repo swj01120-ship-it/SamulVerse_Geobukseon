@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,6 +45,13 @@ public class RhythmGameManager : MonoBehaviour
     public float fadeInDuration = 0.5f;
     public float scaleUpDuration = 0.3f;
 
+    //  게임 종료 관련 추가
+    [Header("Game End Settings")]
+    public float delayBeforeResults = 1f; // 마지막 노트 후 결과창까지 대기 시간
+    private bool isGameEnded = false;
+    private MusicManager musicManager;
+    private BeatMapSpawner beatMapSpawner;
+
     void Awake()
     {
         if (Instance == null)
@@ -59,13 +66,73 @@ public class RhythmGameManager : MonoBehaviour
 
     void Start()
     {
-        // ���â �����
+        // 결과창 숨기기
         if (resultPanel != null)
         {
             resultPanel.SetActive(false);
         }
 
+        // MusicManager와 BeatMapSpawner 찾기
+        musicManager = MusicManager.Instance;
+        if (musicManager == null)
+        {
+            musicManager = FindObjectOfType<MusicManager>();
+        }
+
+        beatMapSpawner = FindObjectOfType<BeatMapSpawner>();
+
         UpdateUI();
+    }
+
+    // 매 프레임 음악 종료 체크
+    void Update()
+    {
+        if (!isGameEnded && musicManager != null && musicManager.audioSource != null)
+        {
+            // 음악이 재생 중이었는데 멈췄고, 게임 시작 후 3초 이상 지났으면
+            if (!musicManager.audioSource.isPlaying && Time.timeSinceLevelLoad > 3f)
+            {
+                // 노트 스폰도 완료됐는지 체크
+                if (beatMapSpawner != null && beatMapSpawner.IsSpawningComplete())
+                {
+                    Debug.Log("Music ended and all notes spawned. Ending game...");
+                    StartCoroutine(EndGameWithDelay());
+                }
+            }
+        }
+    }
+
+    // ⭐ 게임 종료 코루틴 (딜레이 후 결과 표시)
+    IEnumerator EndGameWithDelay()
+    {
+        isGameEnded = true;
+
+        // 노트 생성 즉시 중단
+        if (beatMapSpawner != null)
+        {
+            beatMapSpawner.StopSpawning();
+        }
+
+        Debug.Log($"Waiting {delayBeforeResults}s before showing results...");
+        yield return new WaitForSeconds(delayBeforeResults);
+
+        // 남은 노트들 모두 제거
+        Note[] remainingNotes = FindObjectsOfType<Note>();
+        Debug.Log($"Cleaning up {remainingNotes.Length} remaining notes");
+        foreach (Note note in remainingNotes)
+        {
+            Destroy(note.gameObject);
+        }
+
+        // 장애물도 제거
+        Obstacle[] remainingObstacles = FindObjectsOfType<Obstacle>();
+        foreach (Obstacle obstacle in remainingObstacles)
+        {
+            Destroy(obstacle.gameObject);
+        }
+
+        // 결과창 표시
+        ShowResults();
     }
 
     public void OnPerfect()
@@ -73,7 +140,7 @@ public class RhythmGameManager : MonoBehaviour
         perfectHits++;
         combo++;
 
-        // �޺� ��� ���
+        // 콤보 배수 계산
         float multiplier = 1f + (combo / 10) * comboMultiplierRate;
         int earnedScore = Mathf.RoundToInt(perfectScore * multiplier);
 
@@ -136,7 +203,7 @@ public class RhythmGameManager : MonoBehaviour
 
     void UpdateUI()
     {
-        // ���� �� UI ������Ʈ
+        // 게임 중 UI 업데이트
         if (scoreText != null)
         {
             scoreText.text = $"SCORE: {score:N0}";
@@ -199,7 +266,7 @@ public class RhythmGameManager : MonoBehaviour
             StartCoroutine(AnimateResultPanel());
         }
 
-        // �ؽ�Ʈ ������Ʈ
+        // 텍스트 업데이트
         if (titleText != null)
             titleText.text = "GAME CLEAR!";
 
@@ -246,6 +313,9 @@ public class RhythmGameManager : MonoBehaviour
 
         Debug.Log("=== GAME RESULTS ===");
         Debug.Log($"Score: {score:N0}");
+        Debug.Log($"Max Combo: {maxCombo}");
+        Debug.Log($"Perfect: {perfectHits} | Good: {goodHits} | Miss: {missHits}");
+        Debug.Log($"Accuracy: {GetAccuracy():F1}%");
         Debug.Log($"Rank: {GetRank()}");
     }
 
@@ -257,29 +327,29 @@ public class RhythmGameManager : MonoBehaviour
             canvasGroup = resultPanel.AddComponent<CanvasGroup>();
         }
 
-        // �ʱ� ����
+        // 초기 상태
         canvasGroup.alpha = 0f;
         resultPanel.transform.localScale = Vector3.one * 0.8f;
 
         float elapsed = 0f;
 
-        // ���̵� �� + ������ ��
+        // 페이드 인 + 스케일 업
         while (elapsed < fadeInDuration)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / fadeInDuration;
 
-            // ���̵� ��
+            // 페이드 인
             canvasGroup.alpha = Mathf.Lerp(0f, 1f, t);
 
-            // ������ �� (EaseOutBack ȿ��)
+            // 스케일 업 (EaseOutBack 효과)
             float scale = Mathf.Lerp(0.8f, 1.05f, EaseOutBack(t));
             resultPanel.transform.localScale = Vector3.one * scale;
 
             yield return null;
         }
 
-        // �ణ �ٿ
+        // 약간 바운스
         elapsed = 0f;
         while (elapsed < 0.2f)
         {
@@ -292,12 +362,12 @@ public class RhythmGameManager : MonoBehaviour
             yield return null;
         }
 
-        // ���� ����
+        // 최종 상태
         canvasGroup.alpha = 1f;
         resultPanel.transform.localScale = Vector3.one;
     }
 
-    // EaseOutBack �Լ�
+    // EaseOutBack 함수
     float EaseOutBack(float t)
     {
         float c1 = 1.70158f;

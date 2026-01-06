@@ -1,14 +1,17 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 public class DrumHit : MonoBehaviour
 {
+    [Header("Drum Type")]
+    public string drumType = "Book"; // "Jung", "Jang", "Book", "Jing"
+
     [Header("Audio")]
     public AudioSource drumAudioSource;
     public AudioClip hitSound;
 
     [Header("Detection Settings")]
-    public float noteDetectionRadius = 0.5f;
+    public float noteDetectionRadius = 1.5f;
     public Transform targetPoint;
 
     [Header("Haptic Feedback")]
@@ -60,6 +63,18 @@ public class DrumHit : MonoBehaviour
         {
             targetPoint = transform;
         }
+
+        //  AudioSource 자동 찾기 (할당 안 되어 있으면)
+        if (drumAudioSource == null)
+        {
+            drumAudioSource = GetComponent<AudioSource>();
+            if (drumAudioSource == null)
+            {
+                drumAudioSource = gameObject.AddComponent<AudioSource>();
+                drumAudioSource.spatialBlend = 0f; // 2D 사운드
+                drumAudioSource.playOnAwake = false;
+            }
+        }
     }
 
     void Update()
@@ -70,54 +85,61 @@ public class DrumHit : MonoBehaviour
         }
     }
 
-    void OnCollisionEnter(Collision collision)
+    void OnTriggerEnter(Collider other)
     {
-        if (collision.gameObject.CompareTag("DrumStick"))
+        if (other.CompareTag("DrumStick"))
         {
+            Debug.Log($"{gameObject.name} 타격 감지!");
             OnDrumHit();
         }
     }
 
     void OnDrumHit()
     {
-        // �Ҹ�
+        // 소리
         if (drumAudioSource != null && hitSound != null)
         {
             drumAudioSource.PlayOneShot(hitSound, 1.0f);
+            Debug.Log($"[{drumType}] Sound played!");
         }
 
-        // ��ƽ
+        // 햅틱
         OVRInput.SetControllerVibration(hapticStrength, hapticDuration, controllerHand);
 
-        // ����
+        // 판정
         Note closestNote = FindClosestNote();
 
         if (closestNote != null)
         {
             float distance = Vector3.Distance(closestNote.transform.position, targetPoint.position);
 
+            Debug.Log($"[{drumType}] Note found! Distance: {distance:F3}, Perfect: {closestNote.perfectWindow:F3}, Good: {closestNote.goodWindow:F3}");
+
             if (distance <= closestNote.perfectWindow)
             {
                 closestNote.OnHit(true);
                 PlayParticle(perfectColor);
                 FlashDrum(perfectColor);
-                Debug.Log("�� PERFECT! ��");
+                Debug.Log($"[{drumType}] ★ PERFECT! ★");
             }
             else if (distance <= closestNote.goodWindow)
             {
                 closestNote.OnHit(false);
                 PlayParticle(goodColor);
                 FlashDrum(goodColor);
-                Debug.Log("�� GOOD ��");
+                Debug.Log($"[{drumType}] ★ GOOD ★");
             }
             else
             {
                 PlayParticle(missColor);
+                FlashDrum(missColor);
+                Debug.Log($"[{drumType}] ★ MISS ★ (Too far: {distance:F3})");
             }
         }
         else
         {
             PlayParticle(Color.white);
+            Debug.Log("노트 없음 - 자유 타격");
         }
     }
 
@@ -154,6 +176,13 @@ public class DrumHit : MonoBehaviour
         {
             if (note.hasBeenHit)
                 continue;
+
+            //  드럼 타입 매칭 체크
+            if (note.drumType != drumType)
+            {
+                Debug.Log($"[{drumType}] Skipping note for {note.drumType}");
+                continue;
+            }
 
             float distance = Vector3.Distance(note.transform.position, targetPoint.position);
 
