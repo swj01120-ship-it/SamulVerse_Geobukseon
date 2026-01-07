@@ -1,13 +1,13 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// DrumStickÀÇ ¼Óµµ¸¦ ÃßÀûÇÏ°í ÇİÆ½ ÇÇµå¹éÀ» Á¦°øÇÕ´Ï´Ù.
+/// DrumStickì˜ ì†ë„ë¥¼ ì¶”ì í•˜ê³  í–…í‹± í”¼ë“œë°±ì„ ì œê³µí•©ë‹ˆë‹¤.
 /// 
-/// Ãæµ¹ °¨Áö´Â DrumHit.cs (Cover ¿ÀºêÁ§Æ®)¿¡¼­ Ã³¸®µË´Ï´Ù.
-/// OnTriggerEnter´Â Ãæµ¹ÇÏ´Â µÎ ¿ÀºêÁ§Æ® Áß ÇÏ³ª¿¡¸¸ ÀÖÀ¸¸é ÀÛµ¿ÇÏ¹Ç·Î,
-/// ÀÌ ½ºÅ©¸³Æ®¿¡´Â OnTriggerEnter°¡ ¾ø¾îµµ Á¤»ó ÀÛµ¿ÇÕ´Ï´Ù.
+/// ì¶©ëŒ ê°ì§€ëŠ” DrumHit.cs (Cover ì˜¤ë¸Œì íŠ¸)ì—ì„œ ì²˜ë¦¬ë©ë‹ˆë‹¤.
+/// OnTriggerEnterëŠ” ì¶©ëŒí•˜ëŠ” ë‘ ì˜¤ë¸Œì íŠ¸ ì¤‘ í•˜ë‚˜ì—ë§Œ ìˆìœ¼ë©´ ì‘ë™í•˜ë¯€ë¡œ,
+/// ì´ ìŠ¤í¬ë¦½íŠ¸ì—ëŠ” OnTriggerEnterê°€ ì—†ì–´ë„ ì •ìƒ ì‘ë™í•©ë‹ˆë‹¤.
 /// </summary>
 public class DrumStickController : MonoBehaviour
 {
@@ -18,23 +18,27 @@ public class DrumStickController : MonoBehaviour
     private Vector3 previousPosition;
     public float currentVelocity;
 
+    // â­ currentSpeed í”„ë¡œí¼í‹° ì¶”ê°€ (currentVelocityì™€ ê°™ì€ ê°’)
+    public float currentSpeed
+    {
+        get { return currentVelocity; }
+    }
+
     [Header("Debug")]
     public bool showVelocity = false;
 
-    // Unity ¸Ş½ÃÁö | ÃÖÃÊ 1È¸
     void Start()
     {
         previousPosition = transform.position;
     }
 
-    // Unity ¸Ş½ÃÁö | ¸Å ÇÁ·¹ÀÓ
     void Update()
     {
-        // ¼Óµµ °è»ê (DrumHit.cs¿¡¼­ ÆÇÁ¤ ½Ã »ç¿ë)
+        // ì†ë„ ê³„ì‚° (DrumHit.csì—ì„œ íŒì • ì‹œ ì‚¬ìš©)
         currentVelocity = (transform.position - previousPosition).magnitude / Time.deltaTime;
         previousPosition = transform.position;
 
-        // µğ¹ö±× ¸ğµåÀÏ ¶§ ¼Óµµ Ç¥½Ã
+        // ë””ë²„ê·¸ ëª¨ë“œì¼ ë•Œ ì†ë„ í‘œì‹œ
         if (showVelocity)
         {
             Debug.Log($"{gameObject.name} Velocity: {currentVelocity:F2}");
@@ -42,7 +46,7 @@ public class DrumStickController : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇİÆ½ ÇÇµå¹é Æ®¸®°Å (DrumHit.cs¿¡¼­ È£Ãâ)
+    /// í–…í‹± í”¼ë“œë°± íŠ¸ë¦¬ê±° (DrumHit.csì—ì„œ í˜¸ì¶œ)
     /// </summary>
     public void TriggerHaptic(float intensity, float duration)
     {
@@ -53,16 +57,24 @@ public class DrumStickController : MonoBehaviour
         Invoke("StopHaptic", duration);
     }
 
-    // ÇİÆ½ Á¤Áö
+    // í–…í‹± ì •ì§€
     void StopHaptic()
     {
         OVRInput.SetControllerVibration(0, 0, controller);
     }
 
     /// <summary>
-    /// ÇöÀç ¼Óµµ ¹İÈ¯ (¿ÜºÎ ÂüÁ¶¿ë)
+    /// í˜„ì¬ ì†ë„ ë°˜í™˜ (ì™¸ë¶€ ì°¸ì¡°ìš©)
     /// </summary>
     public float GetVelocity()
+    {
+        return currentVelocity;
+    }
+
+    /// <summary>
+    /// í˜„ì¬ ì†ë„ ë°˜í™˜ (currentSpeed ì´ë¦„ìœ¼ë¡œë„ ì‚¬ìš© ê°€ëŠ¥)
+    /// </summary>
+    public float GetSpeed()
     {
         return currentVelocity;
     }

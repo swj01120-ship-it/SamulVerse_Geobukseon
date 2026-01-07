@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
+
 public class DrumHit : MonoBehaviour
 {
     [Header("Drum Type")]
-    public string drumType = "Book"; // "Jung", "Jang", "Book", "Jing"
+    public string drumType = "Jung";
 
     [Header("Audio")]
     public AudioSource drumAudioSource;
@@ -13,6 +14,7 @@ public class DrumHit : MonoBehaviour
     [Header("Detection Settings")]
     public float noteDetectionRadius = 1.5f;
     public Transform targetPoint;
+    public float hitCooldown = 0.2f; // ⭐ 쿨다운 시간 (초)
 
     [Header("Haptic Feedback")]
     public OVRInput.Controller controllerHand;
@@ -35,6 +37,7 @@ public class DrumHit : MonoBehaviour
 
     private Color originalColor;
     private float colorResetTime;
+    private float lastHitTime = -999f; // ⭐ 마지막 타격 시간
 
     void Start()
     {
@@ -64,14 +67,13 @@ public class DrumHit : MonoBehaviour
             targetPoint = transform;
         }
 
-        //  AudioSource 자동 찾기 (할당 안 되어 있으면)
         if (drumAudioSource == null)
         {
             drumAudioSource = GetComponent<AudioSource>();
             if (drumAudioSource == null)
             {
                 drumAudioSource = gameObject.AddComponent<AudioSource>();
-                drumAudioSource.spatialBlend = 0f; // 2D 사운드
+                drumAudioSource.spatialBlend = 0f;
                 drumAudioSource.playOnAwake = false;
             }
         }
@@ -89,6 +91,29 @@ public class DrumHit : MonoBehaviour
     {
         if (other.CompareTag("DrumStick"))
         {
+            // ⭐ 쿨다운 체크
+            if (Time.time - lastHitTime < hitCooldown)
+            {
+                Debug.Log($"[{drumType}] Cooldown active, ignoring hit");
+                return;
+            }
+
+            // ⭐ 속도 체크 추가
+            DrumStickController drumStick = other.GetComponent<DrumStickController>();
+            if (drumStick != null)
+            {
+                float speed = drumStick.currentSpeed;
+                Debug.Log($"[{drumType}] DrumStick speed: {speed:F2}");
+
+                // 최소 속도 이하면 무시
+                if (speed < 0.5f) // ⭐ 최소 속도 (조절 가능)
+                {
+                    Debug.Log($"[{drumType}] Speed too low, ignoring");
+                    return;
+                }
+            }
+
+            lastHitTime = Time.time; // ⭐ 타격 시간 기록
             Debug.Log($"{gameObject.name} 타격 감지!");
             OnDrumHit();
         }
@@ -96,6 +121,32 @@ public class DrumHit : MonoBehaviour
 
     void OnDrumHit()
     {
+        // 튜토리얼 2단계(북 치기 연습)에서만 특별 처리
+        if (TutorialManager.Instance != null &&
+            TutorialManager.Instance.currentStep == TutorialManager.TutorialStep.DrumBasics)
+        {
+            // 소리
+            if (drumAudioSource != null && hitSound != null)
+            {
+                drumAudioSource.PlayOneShot(hitSound, 1.0f);
+            }
+
+            // 햅틱
+            OVRInput.SetControllerVibration(hapticStrength, hapticDuration, controllerHand);
+
+            // 파티클
+            PlayParticle(Color.yellow);
+
+            // 튜토리얼 카운트 증가
+            int drumIndex = GetDrumIndex();
+            TutorialManager.Instance.OnDrumHitInTutorial(drumIndex);
+            Debug.Log($"✅ [2단계] Tutorial drum hit: {drumType} (Index: {drumIndex})");
+
+            return;
+        }
+
+        // === 나머지 단계는 정상 판정 로직 실행 ===
+
         // 소리
         if (drumAudioSource != null && hitSound != null)
         {
@@ -143,6 +194,20 @@ public class DrumHit : MonoBehaviour
         }
     }
 
+    int GetDrumIndex()
+    {
+        switch (drumType)
+        {
+            case "Jung": return 0;
+            case "Jang": return 1;
+            case "Book": return 2;
+            case "Jing": return 3;
+            default:
+                Debug.LogWarning($"Unknown drum type: {drumType}");
+                return 0;
+        }
+    }
+
     void PlayParticle(Color color)
     {
         if (hitParticle == null) return;
@@ -177,10 +242,8 @@ public class DrumHit : MonoBehaviour
             if (note.hasBeenHit)
                 continue;
 
-            //  드럼 타입 매칭 체크
             if (note.drumType != drumType)
             {
-                Debug.Log($"[{drumType}] Skipping note for {note.drumType}");
                 continue;
             }
 

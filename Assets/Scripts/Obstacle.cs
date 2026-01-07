@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Obstacle : MonoBehaviour
 {
@@ -16,13 +16,14 @@ public class Obstacle : MonoBehaviour
 
     private Transform playerCamera;
     private bool hasDamaged = false;
+    private bool hasPassedTarget = false; // ⭐ 타겟 통과 플래그 추가
     private float previousDistanceToTarget = float.MaxValue;
 
     void Start()
     {
         spawnTime = Time.time;
 
-        // VR ī�޶� ã��
+        // VR 카메라 찾기
         GameObject cameraRig = GameObject.Find("[BuildingBlock] Camera Rig");
         if (cameraRig != null)
         {
@@ -38,9 +39,9 @@ public class Obstacle : MonoBehaviour
             playerCamera = Camera.main.transform;
         }
 
-        Debug.Log($"�� Obstacle spawned at {transform.position}");
+        Debug.Log($"★ Obstacle spawned at {transform.position}");
 
-        // �ʱ� �Ÿ� ����
+        // 초기 거리 저장
         previousDistanceToTarget = Vector3.Distance(transform.position, targetPosition);
     }
 
@@ -48,7 +49,7 @@ public class Obstacle : MonoBehaviour
     {
         float aliveTime = Time.time - spawnTime;
 
-        // �̵�
+        // 이동
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
@@ -57,19 +58,19 @@ public class Obstacle : MonoBehaviour
 
         float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
 
-        // === �ּ� ���� �ð� ���� ===
+        // === 최소 생존 시간 보장 ===
         if (aliveTime < minLifeTime)
         {
             previousDistanceToTarget = distanceToTarget;
             return;
         }
 
-        // === �÷��̾� �浹 üũ ===
+        // === 플레이어 충돌 체크 ===
         if (playerCamera != null && !hasDamaged)
         {
             float distanceToPlayer = Vector3.Distance(transform.position, playerCamera.position);
 
-            // �浹!
+            // 충돌!
             if (distanceToPlayer < damageDistance)
             {
                 OnHitPlayer();
@@ -77,20 +78,18 @@ public class Obstacle : MonoBehaviour
             }
         }
 
-        // === Ÿ�� ���� üũ (���� ����) ===
-        if (distanceToTarget < 0.5f)
+        // === 타겟 도달 체크 (회피 성공!) ===
+        if (distanceToTarget < 0.5f && !hasPassedTarget)
         {
-            Debug.Log($"Obstacle reached target (alive {aliveTime:F1}s)");
-            Destroy(gameObject);
+            OnObstacleAvoided();
             return;
         }
 
-        // === Ÿ���� �����ļ� �־����� ������ üũ ===
-        // �������� �Ÿ��� �־����� �����ϸ� = Ÿ���� ����ħ
-        if (distanceToTarget > previousDistanceToTarget + 0.5f)
+        // === 타겟을 지나쳐서 멀어지는 중인지 체크 (회피 성공!) ===
+        // 이전보다 거리가 멀어지기 시작하면 = 타겟을 지나침
+        if (distanceToTarget > previousDistanceToTarget + 0.5f && !hasPassedTarget)
         {
-            Debug.Log($"Obstacle passed target (alive {aliveTime:F1}s)");
-            Destroy(gameObject);
+            OnObstacleAvoided();
             return;
         }
 
@@ -99,26 +98,56 @@ public class Obstacle : MonoBehaviour
 
     void OnHitPlayer()
     {
-        Debug.Log("�� OBSTACLE HIT PLAYER! Combo reset!");
+        if (hasDamaged) return; // 중복 방지
+        hasDamaged = true;
 
-        if (RhythmGameManager.Instance != null)
+        Debug.Log("★ OBSTACLE HIT PLAYER! Combo reset!");
+
+        // ⭐ 튜토리얼 중이면 튜토리얼 매니저에 알림
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.OnObstacleHitInTutorial();
+        }
+        // 실제 게임 중이면 게임 매니저에 알림
+        else if (RhythmGameManager.Instance != null)
         {
             RhythmGameManager.Instance.OnMiss();
         }
 
+        // 햅틱 피드백
         OVRInput.SetControllerVibration(1f, 0.3f, OVRInput.Controller.LTouch);
         OVRInput.SetControllerVibration(1f, 0.3f, OVRInput.Controller.RTouch);
 
         Destroy(gameObject);
     }
 
+    // ⭐ 장애물 회피 성공 (타겟 도달/통과)
+    void OnObstacleAvoided()
+    {
+        if (hasPassedTarget) return; // 중복 방지
+        hasPassedTarget = true;
+
+        float aliveTime = Time.time - spawnTime;
+        Debug.Log($"★ Obstacle avoided! (alive {aliveTime:F1}s)");
+
+        // ⭐ 튜토리얼 중이면 튜토리얼 매니저에 알림
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.OnObstacleAvoidedInTutorial();
+        }
+
+        Destroy(gameObject);
+    }
+
     void OnTriggerEnter(Collider other)
     {
+        // 북채로 장애물 파괴 가능
         if (other.CompareTag("DrumStick"))
         {
-            Debug.Log("�� Obstacle destroyed by drumstick!");
+            Debug.Log("★ Obstacle destroyed by drumstick!");
 
-            if (RhythmGameManager.Instance != null)
+            // ⭐ 튜토리얼에서는 점수 없음
+            if (TutorialManager.Instance == null && RhythmGameManager.Instance != null)
             {
                 RhythmGameManager.Instance.score += 50;
             }

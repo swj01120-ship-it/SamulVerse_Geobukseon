@@ -90,17 +90,16 @@ public class Note : MonoBehaviour
         if (hasBeenHit) return;
         hasBeenHit = true;
 
-        Debug.Log($"[{drumType}] Hit! Perfect: {isPerfect}");
+        Debug.Log($"Note hit: {(isPerfect ? "Perfect" : "Good")}");
 
-        // ★ 파티클 재생 ★
-        if (destroyParticle != null)
+        // ⭐ 튜토리얼 중이면 튜토리얼 매니저에 알림
+        if (TutorialManager.Instance != null)
         {
-            destroyParticle.transform.SetParent(null); // 부모 해제
-            destroyParticle.Play();
-            Destroy(destroyParticle.gameObject, 2f); // 2초 후 삭제
+            TutorialManager.Instance.OnNoteHitInTutorial(isPerfect);
+            Debug.Log($"✅ [4단계] Tutorial note hit registered!");
         }
-
-        if (RhythmGameManager.Instance != null)
+        // 실제 게임
+        else if (RhythmGameManager.Instance != null)
         {
             if (isPerfect)
             {
