@@ -518,7 +518,7 @@ public class TutorialManager : MonoBehaviour
     void LoadMainGame()
     {
         Debug.Log("Loading main game...");
-        SceneManager.LoadScene("HandTracking_Main");
+        SceneManager.LoadScene("Main");
     }
 
     void SetInstruction(string text)

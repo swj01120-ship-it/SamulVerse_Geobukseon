@@ -11,10 +11,10 @@ public class DrumHit : MonoBehaviour
     public AudioSource drumAudioSource;
     public AudioClip hitSound;
 
-    [Header("Detection Settings")]
-    public float noteDetectionRadius = 1.5f;
+    [Header("Settings")]
     public Transform targetPoint;
-    public float hitCooldown = 0.2f; // ⭐ 쿨다운 시간 (초)
+    public float hitCooldown = 0.3f;
+    private float lastHitTime = -999f;
 
     [Header("Haptic Feedback")]
     public OVRInput.Controller controllerHand;
@@ -34,38 +34,36 @@ public class DrumHit : MonoBehaviour
 
     [Header("Debug")]
     public bool showDebugSphere = true;
+    public float noteDetectionRadius = 1.5f;
+
+    [Header("Audio Layering")]
+    public AudioClip perfectAccent;   // Perfect 전용 '팅' 같은 소리
+    public AudioClip goodAccent;      // Good 전용(선택)
+    [Range(0f, 2f)] public float accentVolume = 0.8f;
+
+    [Header("Haptic Tuning")]
+    public float perfectHapticStrength = 1.0f;
+    public float perfectHapticDuration = 0.08f;
+    public float goodHapticStrength = 0.7f;
+    public float goodHapticDuration = 0.06f;
+    public float missHapticStrength = 0.25f;
+    public float missHapticDuration = 0.04f;
+
+    [Header("Emission Flash (Built-in Standard)")]
+    public Renderer emissionRenderer;           // 네온 머티리얼이 붙은 렌더러(드럼 커버)
+    public Color emissionBaseColor = Color.red; // 기본 발광색
+    public float emissionBaseIntensity = 1.0f;
+    public float emissionHitBoost = 3.0f;       // 타격 순간 추가 강도
+    public float emissionReturnSpeed = 16f;     // 복귀 속도
 
     private Color originalColor;
     private float colorResetTime;
-    private float lastHitTime = -999f; // ⭐ 마지막 타격 시간
 
     void Start()
     {
-        if (drumRenderer != null)
-        {
-            originalColor = drumRenderer.material.color;
-        }
+        if (drumRenderer != null) originalColor = drumRenderer.material.color;
 
-        if (targetPoint == null)
-        {
-            Transform parent = transform.parent;
-            if (parent != null)
-            {
-                foreach (Transform child in parent)
-                {
-                    if (child.name.Contains("TargetPoint") || child.name.Contains("Target"))
-                    {
-                        targetPoint = child;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (targetPoint == null)
-        {
-            targetPoint = transform;
-        }
+        if (targetPoint == null) targetPoint = transform; // 안전장치
 
         if (drumAudioSource == null)
         {
@@ -77,120 +75,149 @@ public class DrumHit : MonoBehaviour
                 drumAudioSource.playOnAwake = false;
             }
         }
+        if (emissionRenderer != null)
+        {
+            var mat = emissionRenderer.material;
+            mat.EnableKeyword("_EMISSION");
+            mat.SetColor("_EmissionColor", emissionBaseColor * emissionBaseIntensity);
+        }
     }
 
+   
     void Update()
     {
         if (Time.time > colorResetTime && drumRenderer != null)
         {
             drumRenderer.material.color = originalColor;
         }
-    }
-
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("DrumStick"))
+        if (emissionRenderer != null)
         {
-            // ⭐ 쿨다운 체크
-            if (Time.time - lastHitTime < hitCooldown)
-            {
-                Debug.Log($"[{drumType}] Cooldown active, ignoring hit");
-                return;
-            }
-
-            // ⭐ 속도 체크 추가
-            DrumStickController drumStick = other.GetComponent<DrumStickController>();
-            if (drumStick != null)
-            {
-                float speed = drumStick.currentSpeed;
-                Debug.Log($"[{drumType}] DrumStick speed: {speed:F2}");
-
-                // 최소 속도 이하면 무시
-                if (speed < 0.5f) // ⭐ 최소 속도 (조절 가능)
-                {
-                    Debug.Log($"[{drumType}] Speed too low, ignoring");
-                    return;
-                }
-            }
-
-            lastHitTime = Time.time; // ⭐ 타격 시간 기록
-            Debug.Log($"{gameObject.name} 타격 감지!");
-            OnDrumHit();
+            var mat = emissionRenderer.material;
+            Color current = mat.GetColor("_EmissionColor");
+            Color target = emissionBaseColor * emissionBaseIntensity;
+            Color next = Color.Lerp(current, target, Time.deltaTime * emissionReturnSpeed);
+            mat.SetColor("_EmissionColor", next);
         }
     }
 
-    void OnDrumHit()
+    // ⭐ Note에서 호출
+    public void OnNoteHit(bool isPerfect, Vector3 hitPosition)
     {
-        // 튜토리얼 2단계(북 치기 연습)에서만 특별 처리
-        if (TutorialManager.Instance != null &&
-            TutorialManager.Instance.currentStep == TutorialManager.TutorialStep.DrumBasics)
-        {
-            // 소리
-            if (drumAudioSource != null && hitSound != null)
-            {
-                drumAudioSource.PlayOneShot(hitSound, 1.0f);
-            }
+        if (Time.time - lastHitTime < hitCooldown) return;
+        lastHitTime = Time.time;
 
-            // 햅틱
-            OVRInput.SetControllerVibration(hapticStrength, hapticDuration, controllerHand);
-
-            // 파티클
-            PlayParticle(Color.yellow);
-
-            // 튜토리얼 카운트 증가
-            int drumIndex = GetDrumIndex();
-            TutorialManager.Instance.OnDrumHitInTutorial(drumIndex);
-            Debug.Log($"✅ [2단계] Tutorial drum hit: {drumType} (Index: {drumIndex})");
-
-            return;
-        }
-
-        // === 나머지 단계는 정상 판정 로직 실행 ===
-
-        // 소리
+        // 1) 기본 타격 사운드
         if (drumAudioSource != null && hitSound != null)
-        {
             drumAudioSource.PlayOneShot(hitSound, 1.0f);
-            Debug.Log($"[{drumType}] Sound played!");
+
+        // 2) Perfect/Good 어택 레이어
+        if (drumAudioSource != null)
+        {
+            if (isPerfect && perfectAccent != null)
+                drumAudioSource.PlayOneShot(perfectAccent, accentVolume);
+            else if (!isPerfect && goodAccent != null)
+                drumAudioSource.PlayOneShot(goodAccent, accentVolume);
         }
 
-        // 햅틱
-        OVRInput.SetControllerVibration(hapticStrength, hapticDuration, controllerHand);
+        // 3) 햅틱 차등
+        if (isPerfect)
+            StartCoroutine(HapticPulse(perfectHapticStrength, perfectHapticDuration));
+        else
+            StartCoroutine(HapticPulse(goodHapticStrength, goodHapticDuration));
 
-        // 판정
-        Note closestNote = FindClosestNote();
-
-        if (closestNote != null)
+        // 4) 파티클/드럼 컬러(기존 유지)
+        if (isPerfect)
         {
-            float distance = Vector3.Distance(closestNote.transform.position, targetPoint.position);
-
-            Debug.Log($"[{drumType}] Note found! Distance: {distance:F3}, Perfect: {closestNote.perfectWindow:F3}, Good: {closestNote.goodWindow:F3}");
-
-            if (distance <= closestNote.perfectWindow)
-            {
-                closestNote.OnHit(true);
-                PlayParticle(perfectColor);
-                FlashDrum(perfectColor);
-                Debug.Log($"[{drumType}] ★ PERFECT! ★");
-            }
-            else if (distance <= closestNote.goodWindow)
-            {
-                closestNote.OnHit(false);
-                PlayParticle(goodColor);
-                FlashDrum(goodColor);
-                Debug.Log($"[{drumType}] ★ GOOD ★");
-            }
-            else
-            {
-                PlayParticle(missColor);
-                FlashDrum(missColor);
-                Debug.Log($"[{drumType}] ★ MISS ★ (Too far: {distance:F3})");
-            }
+            PlayParticle(perfectColor);
+            FlashDrum(perfectColor);
         }
         else
         {
-            PlayParticle(Color.white);
-            Debug.Log("노트 없음 - 자유 타격");
+            PlayParticle(goodColor);
+            FlashDrum(goodColor);
+        }
+
+        // 5) Emission 플래시(네온 펄스)
+        BoostEmission(isPerfect ? emissionHitBoost : emissionHitBoost * 0.6f);
+    }
+
+    public void OnNoteMiss(Vector3 notePosition)
+    {
+        PlayParticle(missColor);
+        FlashDrum(missColor);
+        StartCoroutine(HapticPulse(missHapticStrength, missHapticDuration));
+        BoostEmission(emissionHitBoost * 0.25f);
+    }
+
+    IEnumerator HapticPulse(float strength, float duration)
+    {
+        OVRInput.SetControllerVibration(strength, strength, controllerHand);
+        yield return new WaitForSeconds(duration);
+        OVRInput.SetControllerVibration(0, 0, controllerHand);
+    }
+
+    void BoostEmission(float boost)
+    {
+        if (emissionRenderer == null) return;
+        var mat = emissionRenderer.material;
+        mat.EnableKeyword("_EMISSION");
+
+        Color boosted = emissionBaseColor * (emissionBaseIntensity + boost);
+        mat.SetColor("_EmissionColor", boosted);
+    }
+
+    void PlayParticle(Color color)
+    {
+        if (hitParticle == null) return;
+        var main = hitParticle.main;
+        main.startColor = color;
+        hitParticle.Play();
+    }
+
+    void FlashDrum(Color color)
+    {
+        if (drumRenderer == null) return;
+        drumRenderer.material.color = color;
+        colorResetTime = Time.time + 0.15f;
+    }
+
+
+// ⭐ 튜토리얼 2단계 전용
+void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("DrumStick"))
+        {
+            // ⭐ 튜토리얼에서는 더 긴 쿨다운 (0.5초)
+            float tutorialCooldown = 0.5f;
+
+            if (Time.time - lastHitTime < tutorialCooldown)
+            {
+                return;
+            }
+
+            // 튜토리얼 2단계에서만
+            if (TutorialManager.Instance != null &&
+                TutorialManager.Instance.currentStep == TutorialManager.TutorialStep.DrumBasics)
+            {
+                lastHitTime = Time.time;
+
+                // 소리
+                if (drumAudioSource != null && hitSound != null)
+                {
+                    drumAudioSource.PlayOneShot(hitSound, 2.0f);
+                }
+
+                // 햅틱
+                OVRInput.SetControllerVibration(hapticStrength, hapticDuration, controllerHand);
+
+                // 파티클
+                PlayParticle(Color.yellow);
+
+                // 튜토리얼 카운트
+                int drumIndex = GetDrumIndex();
+                TutorialManager.Instance.OnDrumHitInTutorial(drumIndex);
+                Debug.Log($"✅ [2단계] {drumType} 타격");
+            }
         }
     }
 
@@ -202,69 +229,14 @@ public class DrumHit : MonoBehaviour
             case "Jang": return 1;
             case "Book": return 2;
             case "Jing": return 3;
-            default:
-                Debug.LogWarning($"Unknown drum type: {drumType}");
-                return 0;
+            default: return 0;
         }
-    }
-
-    void PlayParticle(Color color)
-    {
-        if (hitParticle == null) return;
-
-        var main = hitParticle.main;
-        main.startColor = color;
-
-        hitParticle.Play();
-    }
-
-    void FlashDrum(Color color)
-    {
-        if (drumRenderer != null)
-        {
-            drumRenderer.material.color = color;
-            colorResetTime = Time.time + 0.15f;
-        }
-    }
-
-    Note FindClosestNote()
-    {
-        Note[] allNotes = FindObjectsOfType<Note>();
-
-        if (allNotes.Length == 0)
-            return null;
-
-        Note closestNote = null;
-        float closestDistance = float.MaxValue;
-
-        foreach (Note note in allNotes)
-        {
-            if (note.hasBeenHit)
-                continue;
-
-            if (note.drumType != drumType)
-            {
-                continue;
-            }
-
-            float distance = Vector3.Distance(note.transform.position, targetPoint.position);
-
-            if (distance <= noteDetectionRadius && distance < closestDistance)
-            {
-                closestDistance = distance;
-                closestNote = note;
-            }
-        }
-
-        return closestNote;
     }
 
     void OnDrawGizmos()
     {
         if (!showDebugSphere) return;
-
         Transform target = targetPoint != null ? targetPoint : transform;
-
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(target.position, noteDetectionRadius);
     }
