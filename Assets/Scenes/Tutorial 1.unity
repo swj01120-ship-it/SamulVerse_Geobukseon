@@ -618,11 +618,12 @@ MonoBehaviour:
   goodHapticDuration: 0.06
   missHapticStrength: 0.25
   missHapticDuration: 0.04
-  emissionRenderer: {fileID: 1836198943}
-  emissionBaseColor: {r: 1, g: 0, b: 0, a: 1}
-  emissionBaseIntensity: 1
-  emissionHitBoost: 3
-  emissionReturnSpeed: 16
+  emissionRenderer: {fileID: 1794265718}
+  emissionBaseColor: {r: 0.31764707, g: 0.8862745, b: 1, a: 1}
+  emissionBaseIntensity: 0
+  emissionHitBoost: 18
+  emissionFlashDuration: 0.12
+  emissionReturnSpeed: 14
 --- !u!54 &75497157
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -6836,11 +6837,6 @@ MonoBehaviour:
   installationRoutineCheckpoint:
     _installationRoutineId: 
     _installationVariants: []
---- !u!23 &403950968 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 7054144470096349240, guid: 241452c793ff24f47af292bdc1f23815, type: 3}
-  m_PrefabInstance: {fileID: 1315350578}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &405862130
 GameObject:
   m_ObjectHideFlags: 0
@@ -9693,8 +9689,34 @@ PrefabInstance:
     - {fileID: -8700617353114198275, guid: 32a2f8e24b685d94986c446055ace4a8, type: 3}
     - {fileID: 2654713335656134247, guid: 32a2f8e24b685d94986c446055ace4a8, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 32a2f8e24b685d94986c446055ace4a8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 432951135}
   m_SourcePrefab: {fileID: 100100000, guid: 32a2f8e24b685d94986c446055ace4a8, type: 3}
+--- !u!1 &432951134 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 32a2f8e24b685d94986c446055ace4a8, type: 3}
+  m_PrefabInstance: {fileID: 432951133}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &432951135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 432951134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9d9db21cddd5b24db3353ddc5072039, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  floatAmplitude: 0.4
+  floatSpeed: 0.6
+  tiltAmplitude: 1
+  tiltSpeed: 0.5
+  rollAmplitude: 1
+  rollSpeed: 0.5
 --- !u!1 &445203310
 GameObject:
   m_ObjectHideFlags: 0
@@ -10268,11 +10290,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 535583006}
   m_Mesh: {fileID: -2904170973537737546, guid: 6f93919279378eb4d919ac2008737dde, type: 3}
---- !u!23 &544095808 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 7054144470096349240, guid: 241452c793ff24f47af292bdc1f23815, type: 3}
-  m_PrefabInstance: {fileID: 1135130007}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &575269565
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11173,7 +11190,7 @@ Transform:
   m_GameObject: {fileID: 757649371}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0.21, y: 0.62, z: -0.05}
+  m_LocalPosition: {x: 0.21, y: 0.588, z: -0.05}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -17454,6 +17471,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1107205543}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1112369111 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8808423955676554057, guid: 241452c793ff24f47af292bdc1f23815, type: 3}
+  m_PrefabInstance: {fileID: 1426434460}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1135130007
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17720,11 +17742,12 @@ MonoBehaviour:
   goodHapticDuration: 0.06
   missHapticStrength: 0.25
   missHapticDuration: 0.04
-  emissionRenderer: {fileID: 544095808}
-  emissionBaseColor: {r: 1, g: 0, b: 0, a: 1}
-  emissionBaseIntensity: 1
-  emissionHitBoost: 3
-  emissionReturnSpeed: 16
+  emissionRenderer: {fileID: 1395454371}
+  emissionBaseColor: {r: 0.31764707, g: 0.8862745, b: 1, a: 1}
+  emissionBaseIntensity: 0
+  emissionHitBoost: 18
+  emissionFlashDuration: 0.12
+  emissionReturnSpeed: 14
 --- !u!54 &1135130015
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -17987,11 +18010,6 @@ Transform:
   - {fileID: 1359024996}
   m_Father: {fileID: 325893758}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &1197690284 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 7054144470096349240, guid: 241452c793ff24f47af292bdc1f23815, type: 3}
-  m_PrefabInstance: {fileID: 1426434460}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1200306711
 GameObject:
   m_ObjectHideFlags: 0
@@ -18444,11 +18462,12 @@ MonoBehaviour:
   goodHapticDuration: 0.06
   missHapticStrength: 0.25
   missHapticDuration: 0.04
-  emissionRenderer: {fileID: 403950968}
-  emissionBaseColor: {r: 1, g: 0, b: 0, a: 1}
-  emissionBaseIntensity: 1
-  emissionHitBoost: 3
-  emissionReturnSpeed: 16
+  emissionRenderer: {fileID: 1881463907}
+  emissionBaseColor: {r: 0.31764707, g: 0.8862745, b: 1, a: 1}
+  emissionBaseIntensity: 0
+  emissionHitBoost: 18
+  emissionFlashDuration: 0.12
+  emissionReturnSpeed: 14
 --- !u!54 &1315350586
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -18796,6 +18815,11 @@ MonoBehaviour:
   installationRoutineCheckpoint:
     _installationRoutineId: 
     _installationVariants: []
+--- !u!23 &1395454371 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8808423955676554057, guid: 241452c793ff24f47af292bdc1f23815, type: 3}
+  m_PrefabInstance: {fileID: 1135130007}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1396864003
 GameObject:
   m_ObjectHideFlags: 0
@@ -19276,11 +19300,12 @@ MonoBehaviour:
   goodHapticDuration: 0.06
   missHapticStrength: 0.25
   missHapticDuration: 0.04
-  emissionRenderer: {fileID: 1197690284}
-  emissionBaseColor: {r: 1, g: 0, b: 0, a: 1}
-  emissionBaseIntensity: 1
-  emissionHitBoost: 3
-  emissionReturnSpeed: 16
+  emissionRenderer: {fileID: 1112369111}
+  emissionBaseColor: {r: 0.31760997, g: 0.8844887, b: 1, a: 1}
+  emissionBaseIntensity: 0
+  emissionHitBoost: 18
+  emissionFlashDuration: 0.12
+  emissionReturnSpeed: 14
 --- !u!54 &1426434467
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -25494,6 +25519,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!23 &1794265718 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8808423955676554057, guid: 241452c793ff24f47af292bdc1f23815, type: 3}
+  m_PrefabInstance: {fileID: 75497150}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1833870250
 GameObject:
   m_ObjectHideFlags: 0
@@ -25601,11 +25631,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1833870250}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1836198943 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 7054144470096349240, guid: 241452c793ff24f47af292bdc1f23815, type: 3}
-  m_PrefabInstance: {fileID: 75497150}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1842757047
 GameObject:
   m_ObjectHideFlags: 0
@@ -25690,6 +25715,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1842757047}
   m_Mesh: {fileID: -2904170973537737546, guid: 6f93919279378eb4d919ac2008737dde, type: 3}
+--- !u!23 &1881463907 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8808423955676554057, guid: 241452c793ff24f47af292bdc1f23815, type: 3}
+  m_PrefabInstance: {fileID: 1315350578}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1884961507
 GameObject:
   m_ObjectHideFlags: 0
