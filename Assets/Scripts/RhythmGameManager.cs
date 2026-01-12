@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class RhythmGameManager : MonoBehaviour
 {
+    private bool gameStarted = false;
+
     public static RhythmGameManager Instance;
 
     [Header("Game UI")]
@@ -51,7 +53,10 @@ public class RhythmGameManager : MonoBehaviour
     private bool isGameEnded = false;
     private MusicManager musicManager;
     private BeatMapSpawner beatMapSpawner;
-
+    public void NotifyGameStarted()
+    {
+        gameStarted = true;
+    }
     void Awake()
     {
         if (Instance == null)
@@ -87,6 +92,7 @@ public class RhythmGameManager : MonoBehaviour
     // 매 프레임 음악 종료 체크
     void Update()
     {
+        if (!gameStarted) return;
         if (!isGameEnded && musicManager != null && musicManager.audioSource != null)
         {
             // 음악이 재생 중이었는데 멈췄고, 게임 시작 후 3초 이상 지났으면

@@ -1,6 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class MusicManager : MonoBehaviour
 {
@@ -13,74 +11,126 @@ public class MusicManager : MonoBehaviour
     [Header("Audio Source")]
     public AudioSource audioSource;
 
-    [Header("Timing")]
+    [Header("Timing (Read Only)")]
     public float beatInterval;
     public float songPosition;
     public int currentBeat;
 
-    [Header("Song State")]
+    [Header("Song State (Read Only)")]
     public bool songFinished = false;
+
+    [Header("Options")]
+    [Tooltip("체크하면 씬 시작 시 자동 재생(권장: OFF, GameSceneController에서 Start 버튼으로 재생)")]
+    public bool autoPlayOnStart = false;
+
     private bool resultsShown = false;
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else { Destroy(gameObject); return; }
 
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
+        // DontDestroyOnLoad는 선택사항.
+        // 씬마다 MusicManager가 하나씩 있다면 꺼두는 게 안전.
+        // DontDestroyOnLoad(gameObject);
+
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.loop = false;
+        audioSource.playOnAwake = false;
     }
 
     void Start()
     {
-        beatInterval = 60f / bpm;
+        RecalcBeatInterval();
 
-        audioSource.clip = backgroundMusic;
-        audioSource.loop = false;
-        audioSource.playOnAwake = false;
-        audioSource.volume = 0.6f;
-
-        PlayMusic();
+        // ✅ 핵심: 자동재생 끔 (GameSceneController가 Start 버튼에서 PlayMusic 호출)
+        if (autoPlayOnStart && backgroundMusic != null)
+        {
+            SetMusic(backgroundMusic, bpm);
+            PlayMusic();
+        }
     }
 
     void Update()
     {
+        if (audioSource == null) return;
+
         if (audioSource.isPlaying)
         {
             songPosition = audioSource.time;
-            currentBeat = (int)(songPosition / beatInterval);
+            currentBeat = (beatInterval > 0f) ? (int)(songPosition / beatInterval) : 0;
         }
-        else if (!songFinished && songPosition > 0)
+        else if (!songFinished && songPosition > 0f)
         {
-            // ������ ������!
             OnSongFinished();
         }
     }
 
+    void RecalcBeatInterval()
+    {
+        beatInterval = (bpm > 0f) ? (60f / bpm) : 0.5f;
+    }
+
+    // ✅ GameSceneController에서 호출할 세팅 함수
+    public void SetMusic(AudioClip clip, float newBpm)
+    {
+        backgroundMusic = clip;
+        bpm = Mathf.Max(1f, newBpm);
+        RecalcBeatInterval();
+
+        if (audioSource != null)
+        {
+            audioSource.Stop();
+            audioSource.clip = backgroundMusic;
+            songPosition = 0f;
+            currentBeat = 0;
+            songFinished = false;
+            resultsShown = false;
+        }
+    }
+
+    public void SetVolume(float v)
+    {
+        if (audioSource == null) return;
+        audioSource.volume = Mathf.Clamp01(v);
+    }
+
     public void PlayMusic()
     {
+        if (audioSource == null)
+        {
+            Debug.LogError("MusicManager: audioSource is null");
+            return;
+        }
+
+        if (audioSource.clip == null)
+        {
+            Debug.LogError("MusicManager: audioSource.clip is null (SetMusic 먼저 호출 필요)");
+            return;
+        }
+
         audioSource.Play();
         songFinished = false;
         resultsShown = false;
-        Debug.Log($"�� Music started! Duration: {backgroundMusic.length:F1}s, BPM: {bpm}");
+
+        Debug.Log($"🎵 Music started! Duration: {audioSource.clip.length:F1}s, BPM: {bpm}");
     }
 
     public void StopMusic()
     {
+        if (audioSource == null) return;
         audioSource.Stop();
+        songPosition = 0f;
+        currentBeat = 0;
+        songFinished = false;
+        resultsShown = false;
     }
 
     public void PauseMusic()
     {
+        if (audioSource == null) return;
         audioSource.Pause();
     }
 
@@ -88,11 +138,7 @@ public class MusicManager : MonoBehaviour
     {
         songFinished = true;
 
-        Debug.Log("�ڡڡ� SONG FINISHED! �ڡڡ�");
-        Debug.Log($"Song Position: {songPosition:F2}s");
-        Debug.Log($"Clip Length: {backgroundMusic.length:F2}s");
-
-        // ��� ǥ�� (�� ����)
+        Debug.Log("✅ SONG FINISHED!");
         if (!resultsShown)
         {
             resultsShown = true;
@@ -102,27 +148,24 @@ public class MusicManager : MonoBehaviour
 
     void ShowResults()
     {
-        Debug.Log("Showing results...");
-
         if (RhythmGameManager.Instance != null)
-        {
             RhythmGameManager.Instance.ShowResults();
-        }
         else
-        {
             Debug.LogError("RhythmGameManager.Instance is null!");
-        }
     }
 
     public float GetTimeToNextBeat()
     {
-        float timeSinceLastBeat = songPosition % beatInterval;
-        return beatInterval - timeSinceLastBeat;
+        float bi = Mathf.Max(0.0001f, beatInterval);
+        float timeSinceLastBeat = songPosition % bi;
+        return bi - timeSinceLastBeat;
     }
 
     public bool IsOnBeat(float tolerance = 0.1f)
     {
-        float timeSinceLastBeat = songPosition % beatInterval;
-        return timeSinceLastBeat < tolerance || timeSinceLastBeat > (beatInterval - tolerance);
+        float bi = Mathf.Max(0.0001f, beatInterval);
+        float timeSinceLastBeat = songPosition % bi;
+        return timeSinceLastBeat < tolerance || timeSinceLastBeat > (bi - tolerance);
     }
 }
+

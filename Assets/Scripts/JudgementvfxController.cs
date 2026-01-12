@@ -1,54 +1,66 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class JudgementVfxController : MonoBehaviour
 {
     public enum Judgement { Perfect, Good, Miss }
 
-    [Header("Sub Objects (Drag the child objects)")]
+    [Header("Hit_04 Children (Drag these)")]
     public GameObject lightRays;
     public GameObject shockwaveLeft;
     public GameObject shockwaveRight;
     public GameObject particles;
 
-    [Header("Particle Systems (auto-find if empty)")]
+    [Header("Auto Cache")]
     public ParticleSystem[] allSystems;
-
-    [Header("Quest Friendly Defaults")]
-    [Tooltip("¾À ½ÃÀÛ ½Ã ÀÚµ¿ Àç»ı ¹æÁö")]
-    public bool stopOnAwake = true;
 
     void Awake()
     {
         if (allSystems == null || allSystems.Length == 0)
             allSystems = GetComponentsInChildren<ParticleSystem>(true);
 
-        if (stopOnAwake)
-        {
-            foreach (var ps in allSystems)
-            {
-                if (ps == null) continue;
-                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            }
-        }
+        // ì‹œì‘ ì‹œ í•œë²ˆ í„°ì§€ëŠ” ë¬¸ì œ ë°©ì§€(PlayOnAwakeê°€ ì¼œì ¸ ìˆì–´ë„ ê°•ì œë¡œ ì •ì§€/í´ë¦¬ì–´)
+        StopAndClearAll();
+
+        // ì‹œì‘ ì‹œ ë¶ˆí•„ìš”í•œ í™œì„±í™”ë¡œ ì¸í•´ OnEnableë•Œ í„°ì§ˆ ìˆ˜ë„ ìˆì–´ì„œ ê¸°ë³¸ ë¹„í™œì„± ê¶Œì¥
+        SetActiveSafe(lightRays, false);
+        SetActiveSafe(shockwaveLeft, false);
+        SetActiveSafe(shockwaveRight, false);
+        SetActiveSafe(particles, false);
     }
 
-    public void Play(Judgement judgement)
+    void OnEnable()
     {
-        // 1) ÆÇÁ¤º°·Î ¼­ºê ¿ÀºêÁ§Æ® ON/OFF
-        // Perfect: LightRays + Shockwave + Particles
-        // Good: Shockwave + Particles
-        // Miss: Particles¸¸ (¾àÇÏ°Ô º¸ÀÏ ¿¹Á¤)
-        SetActiveSafe(lightRays, judgement == Judgement.Perfect);
-        SetActiveSafe(shockwaveLeft, judgement == Judgement.Perfect || judgement == Judgement.Good);
-        SetActiveSafe(shockwaveRight, judgement == Judgement.Perfect || judgement == Judgement.Good);
+        // PlayOnAwakeê°€ ë‚¨ì•„ìˆê±°ë‚˜ ì¬í™œì„± ì‹œ ë‹¤ì‹œ í„°ì§€ëŠ” ê±¸ ë°©ì§€
+        StopAndClearAll();
+    }
+
+    public void Play(Judgement j)
+    {
+        // íŒì •ë³„ ON/OFF
+        SetActiveSafe(lightRays, j == Judgement.Perfect);
+        SetActiveSafe(shockwaveLeft, j == Judgement.Perfect || j == Judgement.Good);
+        SetActiveSafe(shockwaveRight, j == Judgement.Perfect || j == Judgement.Good);
         SetActiveSafe(particles, true);
 
-        // 2) È°¼ºÈ­µÈ ½Ã½ºÅÛ¸¸ Àç»ı
+        // â­ í•µì‹¬: ë§¤ íƒ€ê²©ë§ˆë‹¤ í™•ì‹¤íˆ ë‹¤ì‹œ í„°ì§€ê²Œ Stop+Clear í›„ Play
         foreach (var ps in allSystems)
         {
             if (ps == null) continue;
             if (!ps.gameObject.activeInHierarchy) continue;
+
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             ps.Play(true);
+        }
+    }
+
+    void StopAndClearAll()
+    {
+        if (allSystems == null) return;
+
+        foreach (var ps in allSystems)
+        {
+            if (ps == null) continue;
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
     }
 
