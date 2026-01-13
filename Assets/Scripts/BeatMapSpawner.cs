@@ -26,109 +26,200 @@ public class BeatMapSpawner : MonoBehaviour
     private MusicManager musicManager;
     private BeatMapData beatMapData;
     private Queue<NoteData> upcomingNotes;
-    private bool hasStarted = false;
 
-    //  스폰 제어 플래그 추가
-    private bool isSpawning = true;
+    private bool isSpawning = false;
     private bool spawningComplete = false;
+    private Coroutine spawnRoutine;
 
-    void Start()
+    private void Awake()
+    {
+        isSpawning = false;
+        spawningComplete = false;
+    }
+
+    private void OnEnable()
+    {
+        MainGameAutoStartController.OnSongStart += HandleSongStart;
+
+        // ✅ 이미 시작된 뒤에 켜져도 바로 스폰 시작
+        if (MainGameAutoStartController.SongStarted)
+            HandleSongStart();
+    }
+
+    private void OnDisable()
+    {
+        MainGameAutoStartController.OnSongStart -= HandleSongStart;
+    }
+
+    private void Start()
     {
         musicManager = MusicManager.Instance;
-
         if (musicManager == null)
         {
-            Debug.LogError("MusicManager not found!");
+            Debug.LogError("[BeatMapSpawner] MusicManager not found!");
             return;
         }
 
-        LoadBeatMap();
+        // 씬에 기본 비트맵이 할당돼 있으면 로드(없어도 OK)
+        if (beatMapJson != null)
+            LoadBeatMap();
 
-        if (beatMapData != null && beatMapData.notes.Count > 0)
+        if (beatMapData == null || beatMapData.notes == null || beatMapData.notes.Count == 0)
         {
-            StartCoroutine(SpawnFromBeatMap());
-        }
-        else
-        {
-            Debug.LogError("BeatMap is empty or not loaded!");
+            if (showDebugInfo)
+                Debug.LogWarning("[BeatMapSpawner] BeatMap empty/not loaded yet. (Will be injected per TrackData)");
         }
     }
 
-    void LoadBeatMap()
+    public void SetBeatMap(TextAsset newBeatMap)
+    {
+        if (newBeatMap == null)
+        {
+            Debug.LogError("[BeatMapSpawner] SetBeatMap: newBeatMap is null!");
+            beatMapJson = null;
+            beatMapData = null;
+            upcomingNotes = null;
+            return;
+        }
+
+        beatMapJson = newBeatMap;
+        LoadBeatMap();
+    }
+
+    private void HandleSongStart()
+    {
+        BeginSpawn();
+    }
+
+    public void BeginSpawn()
+    {
+        if (isSpawning) return;
+
+        if (musicManager == null)
+        {
+            musicManager = MusicManager.Instance;
+            if (musicManager == null)
+            {
+                Debug.LogError("[BeatMapSpawner] MusicManager not found!");
+                return;
+            }
+        }
+
+        // ✅ 필수 값 검증 (노트가 안 나오는 가장 흔한 원인)
+        if (notePrefab == null)
+        {
+            Debug.LogError("[BeatMapSpawner] Note prefab not assigned!");
+            return;
+        }
+
+        if (spawnPoints == null || targetPoints == null || spawnPoints.Length == 0 || targetPoints.Length == 0)
+        {
+            Debug.LogError("[BeatMapSpawner] spawnPoints/targetPoints not set!");
+            return;
+        }
+
+        if (spawnPoints.Length != targetPoints.Length)
+        {
+            Debug.LogError($"[BeatMapSpawner] spawnPoints({spawnPoints.Length}) != targetPoints({targetPoints.Length})");
+            return;
+        }
+
+        if (beatMapData == null || beatMapData.notes == null || beatMapData.notes.Count == 0)
+        {
+            Debug.LogError("[BeatMapSpawner] BeatMap is empty or not loaded!");
+            return;
+        }
+
+        isSpawning = true;
+        spawningComplete = false;
+
+        if (spawnRoutine != null) StopCoroutine(spawnRoutine);
+        spawnRoutine = StartCoroutine(SpawnFromBeatMap());
+
+        if (showDebugInfo)
+            Debug.Log($"[BeatMapSpawner] ✅ BeginSpawn() OK. Notes={beatMapData.notes.Count}, spawnOffset={spawnOffset}");
+    }
+
+    private void LoadBeatMap()
     {
         if (beatMapJson == null)
         {
-            Debug.LogError("BeatMap JSON not assigned!");
+            Debug.LogError("[BeatMapSpawner] BeatMap JSON not assigned!");
+            beatMapData = null;
+            upcomingNotes = null;
             return;
         }
 
         try
         {
             beatMapData = JsonUtility.FromJson<BeatMapData>(beatMapJson.text);
+
+            if (beatMapData == null || beatMapData.notes == null)
+            {
+                Debug.LogError($"[BeatMapSpawner] Failed to parse BeatMap JSON: {beatMapJson.name}");
+                return;
+            }
+
             beatMapData.notes.Sort((a, b) => a.time.CompareTo(b.time));
             upcomingNotes = new Queue<NoteData>(beatMapData.notes);
 
-            Debug.Log($"BeatMap loaded: {beatMapData.songName}");
-            Debug.Log($"Total notes: {beatMapData.notes.Count}");
-            Debug.Log($"First note time: {beatMapData.notes[0].time:F2}s");
+            if (showDebugInfo)
+            {
+                Debug.Log($"[BeatMapSpawner] BeatMap loaded: {beatMapData.songName} (asset: {beatMapJson.name})");
+                Debug.Log($"[BeatMapSpawner] Total notes: {beatMapData.notes.Count}");
+                if (beatMapData.notes.Count > 0)
+                    Debug.Log($"[BeatMapSpawner] First note time: {beatMapData.notes[0].time:F2}s");
+            }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Failed to load BeatMap: {e.Message}");
+            Debug.LogError($"[BeatMapSpawner] Failed to load BeatMap: {e.Message}");
         }
     }
 
-    IEnumerator SpawnFromBeatMap()
+    private IEnumerator SpawnFromBeatMap()
     {
-        // 음악 시작 대기
-        yield return new WaitForSeconds(1f);
+        float songLength = 9999f;
+        if (musicManager != null && musicManager.audioSource != null && musicManager.audioSource.clip != null)
+            songLength = musicManager.audioSource.clip.length;
 
-        // MusicManager 시작 확인
-        while (musicManager == null || musicManager.audioSource == null || !musicManager.audioSource.isPlaying)
-        {
-            yield return null;
-        }
-
-        // 음악 길이 가져오기
-        float songLength = musicManager.audioSource.clip.length;
         float stopSpawnTime = songLength - stopSpawnBeforeSongEnd;
 
-        Debug.Log($"Music started! Song length: {songLength:F2}s");
-        Debug.Log($"Will stop spawning at: {stopSpawnTime:F2}s (song end - {stopSpawnBeforeSongEnd}s)");
+        if (showDebugInfo)
+        {
+            Debug.Log($"[BeatMapSpawner] Start spawn. Song length: {songLength:F2}s");
+            Debug.Log($"[BeatMapSpawner] Stop spawn time: {stopSpawnTime:F2}s");
+        }
 
-
-        // ★ 첫 노트까지 추가 대기 ★
-        if (beatMapData.notes.Count > 0)
+        // 첫 노트가 너무 빠른 경우 보정(기존 로직)
+        if (beatMapData != null && beatMapData.notes != null && beatMapData.notes.Count > 0)
         {
             float firstNoteTime = beatMapData.notes[0].time;
-            
-
-            // 첫 노트 시간이 spawnOffset보다 짧으면 대기
             if (firstNoteTime < spawnOffset)
             {
-                float waitTime = spawnOffset - firstNoteTime + 0.5f;
-                Debug.Log($"Waiting additional {waitTime:F2}s for first note...");
+                float waitTime = (spawnOffset - firstNoteTime) + 0.5f;
+                if (showDebugInfo) Debug.Log($"[BeatMapSpawner] Waiting {waitTime:F2}s for first note...");
                 yield return new WaitForSeconds(waitTime);
             }
         }
 
-        hasStarted = true;
         int spawnedCount = 0;
         int totalNotes = beatMapData.notes.Count;
 
-        // ⭐ isSpawning 플래그 + 음악 시간 체크
-        while (upcomingNotes.Count > 0 && isSpawning)
+        while (upcomingNotes != null && upcomingNotes.Count > 0 && isSpawning)
         {
-            float currentTime = musicManager.songPosition;
+            float currentTime = (musicManager != null) ? musicManager.songPosition : Time.timeSinceLevelLoad;
 
-            // ⭐ 음악 끝나기 2초 전이면 스폰 중단
             if (currentTime >= stopSpawnTime)
             {
                 int remainingNotes = upcomingNotes.Count;
-                Debug.Log($"★ Reached stop time ({stopSpawnTime:F2}s). Stopping spawn.");
-                Debug.Log($"★ Spawned {spawnedCount}/{totalNotes} notes. Skipped {remainingNotes} notes.");
+                if (showDebugInfo)
+                {
+                    Debug.Log($"[BeatMapSpawner] Reached stop time ({stopSpawnTime:F2}s). Stopping spawn.");
+                    Debug.Log($"[BeatMapSpawner] Spawned {spawnedCount}/{totalNotes}, Skipped {remainingNotes}");
+                }
                 spawningComplete = true;
-                yield break; // 코루틴 종료
+                yield break;
             }
 
             NoteData nextNote = upcomingNotes.Peek();
@@ -140,57 +231,39 @@ public class BeatMapSpawner : MonoBehaviour
                 spawnedCount++;
 
                 if (showDebugInfo)
-                {
-                    Debug.Log($"[{spawnedCount}/{beatMapData.notes.Count}] Spawned {nextNote.type} at {currentTime:F2}s for drum {nextNote.drum}");
-                }
+                    Debug.Log($"[{spawnedCount}/{totalNotes}] Spawned {nextNote.type} at {currentTime:F2}s for drum {nextNote.drum}");
             }
 
             yield return null;
         }
-       
 
-        // ⭐ 스폰 완료 플래그 설정
         spawningComplete = true;
-        Debug.Log($"Note spawning complete! Total spawned: {spawnedCount}/{totalNotes}");
+        if (showDebugInfo) Debug.Log($"[BeatMapSpawner] Spawn complete: {spawnedCount}/{totalNotes}");
     }
 
-    void SpawnNote(NoteData noteData)
+    private void SpawnNote(NoteData noteData)
     {
         if (noteData.drum < 0 || noteData.drum >= spawnPoints.Length)
         {
-            Debug.LogError($"Invalid drum index: {noteData.drum}");
+            Debug.LogError($"[BeatMapSpawner] Invalid drum index: {noteData.drum}");
             return;
         }
 
         if (spawnPoints[noteData.drum] == null || targetPoints[noteData.drum] == null)
         {
-            Debug.LogError($"Spawn or target point {noteData.drum} is null!");
+            Debug.LogError($"[BeatMapSpawner] Spawn or target point {noteData.drum} is null!");
             return;
         }
 
         if (noteData.type == "obstacle")
-        {
             SpawnObstacle(noteData.drum);
-        }
         else
-        {
             SpawnHitNote(noteData.drum);
-        }
     }
 
-    void SpawnHitNote(int drumIndex)
+    private void SpawnHitNote(int drumIndex)
     {
-        if (notePrefab == null)
-        {
-            Debug.LogError("Note prefab not assigned!");
-            return;
-        }
-
-        GameObject noteObj = Instantiate(
-            notePrefab,
-            spawnPoints[drumIndex].position,
-            Quaternion.identity
-        );
+        GameObject noteObj = Instantiate(notePrefab, spawnPoints[drumIndex].position, Quaternion.identity);
 
         Note note = noteObj.GetComponent<Note>();
         if (note != null)
@@ -198,32 +271,21 @@ public class BeatMapSpawner : MonoBehaviour
             note.speed = noteSpeed;
             note.targetPosition = targetPoints[drumIndex].position;
 
-            // ⭐ drumType 설정 (0=Jung, 1=Jang, 2=Book, 3=Jing)
             string[] drumTypes = { "Jung", "Jang", "Book", "Jing" };
             if (drumIndex < drumTypes.Length)
-            {
                 note.drumType = drumTypes[drumIndex];
-            }
+        }
+        else
+        {
+            Debug.LogWarning("[BeatMapSpawner] Spawned notePrefab has no Note component.");
         }
     }
 
-    void SpawnObstacle(int drumIndex)
+    private void SpawnObstacle(int drumIndex)
     {
         if (obstaclePrefab == null)
         {
-            Debug.LogWarning("Obstacle prefab not assigned!");
-            return;
-        }
-
-        if (drumIndex < 0 || drumIndex >= spawnPoints.Length)
-        {
-            Debug.LogError($"Invalid drum index: {drumIndex}");
-            return;
-        }
-
-        if (spawnPoints[drumIndex] == null)
-        {
-            Debug.LogError($"SpawnPoint {drumIndex} is null!");
+            Debug.LogWarning("[BeatMapSpawner] Obstacle prefab not assigned!");
             return;
         }
 
@@ -231,19 +293,13 @@ public class BeatMapSpawner : MonoBehaviour
         obstaclePos.y += 0.5f;
 
         Vector3 playerTarget = GetPlayerObstacleTarget(drumIndex);
-
         if (playerTarget == Vector3.zero)
         {
-            Debug.LogError("Could not find player camera!");
+            Debug.LogError("[BeatMapSpawner] Could not find player camera!");
             return;
         }
 
-        GameObject obstacleObj = Instantiate(
-            obstaclePrefab,
-            obstaclePos,
-            Quaternion.identity
-        );
-
+        GameObject obstacleObj = Instantiate(obstaclePrefab, obstaclePos, Quaternion.identity);
         obstacleObj.name = $"Obstacle_ToPlayer_{drumIndex}";
 
         Obstacle obstacle = obstacleObj.GetComponent<Obstacle>();
@@ -254,7 +310,7 @@ public class BeatMapSpawner : MonoBehaviour
         }
     }
 
-    Vector3 GetPlayerObstacleTarget(int drumIndex)
+    private Vector3 GetPlayerObstacleTarget(int drumIndex)
     {
         Transform playerCamera = null;
 
@@ -263,82 +319,45 @@ public class BeatMapSpawner : MonoBehaviour
         {
             Transform trackingSpace = cameraRig.transform.Find("TrackingSpace");
             if (trackingSpace != null)
-            {
                 playerCamera = trackingSpace.Find("CenterEyeAnchor");
-            }
         }
 
         if (playerCamera == null)
         {
-            playerCamera = Camera.main.transform;
-            if (playerCamera == null)
+            if (Camera.main == null)
             {
-                Debug.LogError("Cannot find player camera!");
+                Debug.LogError("[BeatMapSpawner] Cannot find player camera!");
                 return Vector3.zero;
             }
+            playerCamera = Camera.main.transform;
         }
 
         Vector3 baseTarget = playerCamera.position;
 
         switch (drumIndex)
         {
-            case 0:
-                baseTarget += playerCamera.right * -0.8f;
-                baseTarget += Vector3.up * 0.3f;
-                break;
-
-            case 1:
-                baseTarget += playerCamera.right * -0.5f;
-                baseTarget += Vector3.up * -0.1f;
-                break;
-
-            case 2:
-                baseTarget += playerCamera.right * 0.5f;
-                baseTarget += Vector3.up * -0.1f;
-                break;
-
-            case 3:
-                baseTarget += playerCamera.right * 0.8f;
-                baseTarget += Vector3.up * 0.3f;
-                break;
+            case 0: baseTarget += playerCamera.right * -0.8f + Vector3.up * 0.3f; break;
+            case 1: baseTarget += playerCamera.right * -0.5f + Vector3.up * -0.1f; break;
+            case 2: baseTarget += playerCamera.right * 0.5f + Vector3.up * -0.1f; break;
+            case 3: baseTarget += playerCamera.right * 0.8f + Vector3.up * 0.3f; break;
         }
 
         return baseTarget;
     }
 
-    // 스폰 중단 메서드 (RhythmGameManager에서 호출)
     public void StopSpawning()
     {
         isSpawning = false;
-        StopAllCoroutines();
-        Debug.Log("Note spawning stopped!");
+        if (spawnRoutine != null)
+        {
+            StopCoroutine(spawnRoutine);
+            spawnRoutine = null;
+        }
+        Debug.Log("[BeatMapSpawner] Note spawning stopped!");
     }
 
-    // 스폰 완료 여부 확인 (RhythmGameManager에서 호출)
     public bool IsSpawningComplete()
     {
         return spawningComplete;
-    }
-
-    void OnGUI()
-    {
-        if (!showDebugInfo || !hasStarted) return;
-
-        GUIStyle style = new GUIStyle();
-        style.fontSize = 18;
-        style.normal.textColor = Color.white;
-
-        int remaining = upcomingNotes.Count;
-        int total = beatMapData != null ? beatMapData.notes.Count : 0;
-        int spawned = total - remaining;
-
-        GUI.Label(new Rect(10, Screen.height - 60, 400, 30),
-            $"Notes: {spawned}/{total} | Remaining: {remaining}", style);
-
-        if (musicManager != null)
-        {
-            GUI.Label(new Rect(10, Screen.height - 30, 400, 30),
-                $"Song Time: {musicManager.songPosition:F2}s", style);
-        }
     }
 }

@@ -4,6 +4,11 @@ public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
 
+    [Header("BGM 설정 (메인메뉴/공통)")]
+    [SerializeField] private AudioClip menuBgm;
+    [SerializeField] private AudioSource bgmSource;
+    [SerializeField] private bool playMenuBgmOnStart = true;
+
     [Header("효과음(SFX) 설정")]
     [SerializeField] private AudioClip clickSound;
     [SerializeField] private AudioSource sfxSource;
@@ -11,47 +16,100 @@ public class AudioManager : MonoBehaviour
     [Header("VR 3D 오디오 (선택 사항)")]
     [SerializeField] private bool useVRSpatialAudio = false;
 
-    private float currentSFXVolume = 1f;
+    private float currentBGMVolume = 0.2f;
+    private float currentSFXVolume = 0.5f;
+
+    private const string KEY_BGM = "BGMVolume";
+    private const string KEY_SFX = "SFXVolume";
 
     private void Awake()
     {
-        Debug.Log("━━━ AudioManager Awake 호출 ━━━");
-
-        if (Instance == null)
+        if (Instance != null && Instance != this)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-
-            // AudioSource 자동 생성
-            if (sfxSource == null)
-            {
-                sfxSource = gameObject.AddComponent<AudioSource>();
-            }
-
-            sfxSource.playOnAwake = false;
-            sfxSource.loop = false;
-            sfxSource.spatialBlend = 0f;
-
-            // ★ PlayerPrefs에서 SFX 볼륨 불러오기
-            currentSFXVolume = PlayerPrefs.GetFloat("SFXVolume", 0.5f);
-            sfxSource.volume = currentSFXVolume;
-
-            if (useVRSpatialAudio)
-            {
-                Setup3DAudio();
-            }
-
-            Debug.Log($"✓ AudioManager 초기화 완료");
-            Debug.Log($"  - clickSound: {(clickSound != null ? clickSound.name : "NULL!")}");
-            Debug.Log($"  - SFX 볼륨: {currentSFXVolume:F2}");
-        }
-        else
-        {
-            Debug.LogWarning($"⚠ AudioManager 중복! 파괴: {gameObject.name}");
             Destroy(gameObject);
+            return;
         }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        // AudioSource 자동 생성
+        if (bgmSource == null) bgmSource = gameObject.AddComponent<AudioSource>();
+        if (sfxSource == null) sfxSource = gameObject.AddComponent<AudioSource>();
+
+        // BGM 세팅
+        bgmSource.playOnAwake = false;
+        bgmSource.loop = true;
+        bgmSource.spatialBlend = 0f;
+
+        // SFX 세팅
+        sfxSource.playOnAwake = false;
+        sfxSource.loop = false;
+        sfxSource.spatialBlend = 0f;
+
+        // 볼륨 로드 (GameManager > PlayerPrefs)
+        ReloadVolumesFromManagerOrPrefs();
+
+        if (useVRSpatialAudio)
+            Setup3DAudio();
+
+        // 메뉴에서 자동 재생 옵션
+        if (playMenuBgmOnStart && menuBgm != null)
+            PlayMenuBGM();
     }
 
+    // -------------------------
+    // BGM
+    // -------------------------
+    public void PlayMenuBGM()
+    {
+        if (bgmSource == null) return;
+
+        ReloadVolumesFromManagerOrPrefs();
+
+        if (menuBgm == null)
+        {
+            Debug.LogWarning("⚠ menuBgm이 비어있습니다. Inspector에서 연결하세요.");
+            return;
+        }
+
+        if (bgmSource.clip != menuBgm)
+            bgmSource.clip = menuBgm;
+
+        bgmSource.volume = currentBGMVolume;
+
+        if (!bgmSource.isPlaying)
+            bgmSource.Play();
+    }
+
+    public void StopBGM()
+    {
+        if (bgmSource != null && bgmSource.isPlaying)
+            bgmSource.Stop();
+    }
+
+    public void SetBGMVolume(float volume)
+    {
+        currentBGMVolume = Mathf.Clamp01(volume);
+
+        if (bgmSource != null)
+            bgmSource.volume = currentBGMVolume;
+
+        PlayerPrefs.SetFloat(KEY_BGM, currentBGMVolume);
+        PlayerPrefs.Save();
+    }
+
+    // 필요하면 메뉴 프리뷰 재생 중 배경음 낮추기 용도
+    public void SetBGMVolumeMultiplier(float mul)
+    {
+        mul = Mathf.Clamp01(mul);
+        if (bgmSource != null)
+            bgmSource.volume = currentBGMVolume * mul;
+    }
+
+    // -------------------------
+    // SFX
+    // -------------------------
     public void PlayClickSound()
     {
         if (sfxSource == null)
@@ -66,19 +124,20 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        // ★ 매번 최신 볼륨 적용
+        ReloadVolumesFromManagerOrPrefs();
+
         sfxSource.volume = currentSFXVolume;
-        sfxSource.PlayOneShot(clickSound, currentSFXVolume); // ★ 볼륨 명시적 전달
-        Debug.Log($"🔊 클릭음 재생 (볼륨: {currentSFXVolume:F2})");
+        sfxSource.PlayOneShot(clickSound, currentSFXVolume);
     }
 
     public void PlaySFX(AudioClip clip)
     {
-        if (sfxSource != null && clip != null)
-        {
-            sfxSource.volume = currentSFXVolume;
-            sfxSource.PlayOneShot(clip, currentSFXVolume);
-        }
+        if (sfxSource == null || clip == null) return;
+
+        ReloadVolumesFromManagerOrPrefs();
+
+        sfxSource.volume = currentSFXVolume;
+        sfxSource.PlayOneShot(clip, currentSFXVolume);
     }
 
     public void SetSFXVolume(float volume)
@@ -86,16 +145,36 @@ public class AudioManager : MonoBehaviour
         currentSFXVolume = Mathf.Clamp01(volume);
 
         if (sfxSource != null)
-        {
             sfxSource.volume = currentSFXVolume;
-        }
 
-        PlayerPrefs.SetFloat("SFXVolume", currentSFXVolume);
+        PlayerPrefs.SetFloat(KEY_SFX, currentSFXVolume);
         PlayerPrefs.Save();
-
-        Debug.Log($"🎚️ SFX 볼륨 설정: {currentSFXVolume:F2}");
     }
 
+    // -------------------------
+    // Volume source
+    // -------------------------
+    public void ReloadVolumesFromManagerOrPrefs()
+    {
+        // GameManager 우선
+        if (GameManager.Instance != null)
+        {
+            currentBGMVolume = Mathf.Clamp01(GameManager.Instance.GetBGMVolume());
+            currentSFXVolume = Mathf.Clamp01(GameManager.Instance.GetSFXVolume());
+        }
+        else
+        {
+            currentBGMVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(KEY_BGM, currentBGMVolume));
+            currentSFXVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(KEY_SFX, currentSFXVolume));
+        }
+
+        if (bgmSource != null) bgmSource.volume = currentBGMVolume;
+        if (sfxSource != null) sfxSource.volume = currentSFXVolume;
+    }
+
+    // -------------------------
+    // VR 3D Audio (optional)
+    // -------------------------
     private void Setup3DAudio()
     {
         if (sfxSource != null)
@@ -113,14 +192,8 @@ public class AudioManager : MonoBehaviour
 
         if (sfxSource != null)
         {
-            if (enable)
-            {
-                Setup3DAudio();
-            }
-            else
-            {
-                sfxSource.spatialBlend = 0f;
-            }
+            if (enable) Setup3DAudio();
+            else sfxSource.spatialBlend = 0f;
         }
     }
 }

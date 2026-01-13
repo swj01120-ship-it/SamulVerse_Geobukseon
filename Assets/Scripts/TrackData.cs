@@ -1,17 +1,17 @@
 ﻿using UnityEngine;
 using UnityEngine.Video;
 
-[CreateAssetMenu(fileName = "TrackData", menuName = "Game/Track Data")]
+[CreateAssetMenu(menuName = "RhythmGame/Track Data", fileName = "TD_NewTrack")]
 public class TrackData : ScriptableObject
 {
     [Header("곡 정보")]
     public string trackName;
     public string artistName;
-    public int bpm;
-    public string difficulty;
+    public int bpm = 120;
+    public string difficulty = "normal";
 
     [Header("음악")]
-    public AudioClip audioClip;   // ✅ 추가
+    public AudioClip audioClip;
 
     [Header("영상")]
     public VideoClip previewVideo;
@@ -20,6 +20,6 @@ public class TrackData : ScriptableObject
     [Header("썸네일")]
     public Sprite thumbnail;
 
-    public BeatMap beatMap;   // ✅ 게임씬에서 스폰에 사용할 비트맵
-
+    [Header("비트맵 (JSON 파일: TextAsset)")]
+    public TextAsset beatMap; // ✅ 이제 Resources/Generated json 파일 드래그 가능
 }

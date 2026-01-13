@@ -16690,6 +16690,7 @@ MonoBehaviour:
   songPosition: 0
   currentBeat: 0
   songFinished: 0
+  autoPlayOnStart: 0
 --- !u!82 &1223362842
 AudioSource:
   m_ObjectHideFlags: 0

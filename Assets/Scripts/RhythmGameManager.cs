@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -47,58 +46,66 @@ public class RhythmGameManager : MonoBehaviour
     public float fadeInDuration = 0.5f;
     public float scaleUpDuration = 0.3f;
 
-    //  게임 종료 관련 추가
     [Header("Game End Settings")]
-    public float delayBeforeResults = 1f; // 마지막 노트 후 결과창까지 대기 시간
+    public float delayBeforeResults = 1f;
     private bool isGameEnded = false;
+
     private MusicManager musicManager;
     private BeatMapSpawner beatMapSpawner;
-    public void NotifyGameStarted()
+
+    private void Awake()
     {
-        gameStarted = true;
-    }
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else { Destroy(gameObject); return; }
     }
 
-    void Start()
+    private void OnEnable()
     {
-        // 결과창 숨기기
-        if (resultPanel != null)
-        {
-            resultPanel.SetActive(false);
-        }
+        // ✅ 영상 시작 타이밍에 게임 시작
+        MainGameAutoStartController.OnSongStart += HandleSongStart;
+    }
 
-        // MusicManager와 BeatMapSpawner 찾기
+    private void OnDisable()
+    {
+        MainGameAutoStartController.OnSongStart -= HandleSongStart;
+    }
+
+    private void Start()
+    {
+        if (resultPanel != null) resultPanel.SetActive(false);
+
         musicManager = MusicManager.Instance;
-        if (musicManager == null)
-        {
-            musicManager = FindObjectOfType<MusicManager>();
-        }
+        if (musicManager == null) musicManager = FindObjectOfType<MusicManager>();
 
         beatMapSpawner = FindObjectOfType<BeatMapSpawner>();
+
+        // 시작 전 상태로 고정
+        gameStarted = false;
+        isGameEnded = false;
 
         UpdateUI();
     }
 
-    // 매 프레임 음악 종료 체크
-    void Update()
+    private void HandleSongStart()
+    {
+        NotifyGameStarted();
+    }
+
+    public void NotifyGameStarted()
+    {
+        gameStarted = true;
+        Debug.Log("[RhythmGameManager] ✅ Game Started");
+    }
+
+    private void Update()
     {
         if (!gameStarted) return;
+
         if (!isGameEnded && musicManager != null && musicManager.audioSource != null)
         {
-            // 음악이 재생 중이었는데 멈췄고, 게임 시작 후 3초 이상 지났으면
+            // 음악이 멈췄고(끝났고), 게임 시작 후 일정 시간 경과했을 때 종료 처리
             if (!musicManager.audioSource.isPlaying && Time.timeSinceLevelLoad > 3f)
             {
-                // 노트 스폰도 완료됐는지 체크
                 if (beatMapSpawner != null && beatMapSpawner.IsSpawningComplete())
                 {
                     Debug.Log("Music ended and all notes spawned. Ending game...");
@@ -108,36 +115,23 @@ public class RhythmGameManager : MonoBehaviour
         }
     }
 
-    // ⭐ 게임 종료 코루틴 (딜레이 후 결과 표시)
-    IEnumerator EndGameWithDelay()
+    private IEnumerator EndGameWithDelay()
     {
         isGameEnded = true;
 
-        // 노트 생성 즉시 중단
         if (beatMapSpawner != null)
-        {
             beatMapSpawner.StopSpawning();
-        }
 
-        Debug.Log($"Waiting {delayBeforeResults}s before showing results...");
         yield return new WaitForSeconds(delayBeforeResults);
 
-        // 남은 노트들 모두 제거
+        // 남은 노트 제거
         Note[] remainingNotes = FindObjectsOfType<Note>();
-        Debug.Log($"Cleaning up {remainingNotes.Length} remaining notes");
-        foreach (Note note in remainingNotes)
-        {
-            Destroy(note.gameObject);
-        }
+        foreach (Note note in remainingNotes) Destroy(note.gameObject);
 
-        // 장애물도 제거
+        // 남은 장애물 제거
         Obstacle[] remainingObstacles = FindObjectsOfType<Obstacle>();
-        foreach (Obstacle obstacle in remainingObstacles)
-        {
-            Destroy(obstacle.gameObject);
-        }
+        foreach (Obstacle obstacle in remainingObstacles) Destroy(obstacle.gameObject);
 
-        // 결과창 표시
         ShowResults();
     }
 
@@ -146,25 +140,15 @@ public class RhythmGameManager : MonoBehaviour
         perfectHits++;
         combo++;
 
-        // 콤보 배수 계산
         float multiplier = 1f + (combo / 10) * comboMultiplierRate;
         int earnedScore = Mathf.RoundToInt(perfectScore * multiplier);
 
         score += earnedScore;
+        if (combo > maxCombo) maxCombo = combo;
 
-        if (combo > maxCombo)
-        {
-            maxCombo = combo;
-        }
-
-        if (comboSystem != null)
-        {
-            comboSystem.AddCombo();
-        }
+        if (comboSystem != null) comboSystem.AddCombo();
 
         UpdateUI();
-
-        Debug.Log($"PERFECT! +{earnedScore} (Combo: {combo}, x{multiplier:F1})");
     }
 
     public void OnGood()
@@ -176,20 +160,11 @@ public class RhythmGameManager : MonoBehaviour
         int earnedScore = Mathf.RoundToInt(goodScore * multiplier);
 
         score += earnedScore;
+        if (combo > maxCombo) maxCombo = combo;
 
-        if (combo > maxCombo)
-        {
-            maxCombo = combo;
-        }
-
-        if (comboSystem != null)
-        {
-            comboSystem.AddCombo();
-        }
+        if (comboSystem != null) comboSystem.AddCombo();
 
         UpdateUI();
-
-        Debug.Log($"GOOD! +{earnedScore} (Combo: {combo}, x{multiplier:F1})");
     }
 
     public void OnMiss()
@@ -197,43 +172,26 @@ public class RhythmGameManager : MonoBehaviour
         missHits++;
         combo = 0;
 
-        if (comboSystem != null)
-        {
-            comboSystem.ResetCombo();
-        }
+        if (comboSystem != null) comboSystem.ResetCombo();
 
         UpdateUI();
-
-        Debug.Log("MISS! Combo reset!");
     }
 
-    void UpdateUI()
+    private void UpdateUI()
     {
-        // 게임 중 UI 업데이트
-        if (scoreText != null)
-        {
-            scoreText.text = $"SCORE: {score:N0}";
-        }
+        if (scoreText != null) scoreText.text = $"SCORE: {score:N0}";
 
         if (comboText != null)
         {
             if (combo > 0)
             {
                 comboText.text = combo.ToString();
-
-                if (combo >= 50)
-                    comboText.color = Color.red;
-                else if (combo >= 30)
-                    comboText.color = Color.yellow;
-                else if (combo >= 10)
-                    comboText.color = Color.green;
-                else
-                    comboText.color = Color.white;
+                if (combo >= 50) comboText.color = Color.red;
+                else if (combo >= 30) comboText.color = Color.yellow;
+                else if (combo >= 10) comboText.color = Color.green;
+                else comboText.color = Color.white;
             }
-            else
-            {
-                comboText.text = "";
-            }
+            else comboText.text = "";
         }
 
         if (accuracyText != null)
@@ -255,7 +213,6 @@ public class RhythmGameManager : MonoBehaviour
     public string GetRank()
     {
         float accuracy = GetAccuracy();
-
         if (accuracy >= 95f) return "SS";
         if (accuracy >= 90f) return "S";
         if (accuracy >= 80f) return "A";
@@ -272,27 +229,13 @@ public class RhythmGameManager : MonoBehaviour
             StartCoroutine(AnimateResultPanel());
         }
 
-        // 텍스트 업데이트
-        if (titleText != null)
-            titleText.text = "GAME CLEAR!";
-
-        if (resultScoreText != null)
-            resultScoreText.text = $"SCORE: {score:N0}";
-
-        if (maxComboText != null)
-            maxComboText.text = $"MAX COMBO: {maxCombo}";
-
-        if (perfectText != null)
-            perfectText.text = $"Perfect: {perfectHits}";
-
-        if (goodText != null)
-            goodText.text = $"Good: {goodHits}";
-
-        if (missText != null)
-            missText.text = $"Miss: {missHits}";
-
-        if (resultAccuracyText != null)
-            resultAccuracyText.text = $"{GetAccuracy():F1}%";
+        if (titleText != null) titleText.text = "GAME CLEAR!";
+        if (resultScoreText != null) resultScoreText.text = $"SCORE: {score:N0}";
+        if (maxComboText != null) maxComboText.text = $"MAX COMBO: {maxCombo}";
+        if (perfectText != null) perfectText.text = $"Perfect: {perfectHits}";
+        if (goodText != null) goodText.text = $"Good: {goodHits}";
+        if (missText != null) missText.text = $"Miss: {missHits}";
+        if (resultAccuracyText != null) resultAccuracyText.text = $"{GetAccuracy():F1}%";
 
         if (rankText != null)
         {
@@ -316,46 +259,30 @@ public class RhythmGameManager : MonoBehaviour
                     break;
             }
         }
-
-        Debug.Log("=== GAME RESULTS ===");
-        Debug.Log($"Score: {score:N0}");
-        Debug.Log($"Max Combo: {maxCombo}");
-        Debug.Log($"Perfect: {perfectHits} | Good: {goodHits} | Miss: {missHits}");
-        Debug.Log($"Accuracy: {GetAccuracy():F1}%");
-        Debug.Log($"Rank: {GetRank()}");
     }
 
-    IEnumerator AnimateResultPanel()
+    private IEnumerator AnimateResultPanel()
     {
         CanvasGroup canvasGroup = resultPanel.GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
-        {
-            canvasGroup = resultPanel.AddComponent<CanvasGroup>();
-        }
+        if (canvasGroup == null) canvasGroup = resultPanel.AddComponent<CanvasGroup>();
 
-        // 초기 상태
         canvasGroup.alpha = 0f;
         resultPanel.transform.localScale = Vector3.one * 0.8f;
 
         float elapsed = 0f;
-
-        // 페이드 인 + 스케일 업
         while (elapsed < fadeInDuration)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / fadeInDuration;
 
-            // 페이드 인
             canvasGroup.alpha = Mathf.Lerp(0f, 1f, t);
 
-            // 스케일 업 (EaseOutBack 효과)
             float scale = Mathf.Lerp(0.8f, 1.05f, EaseOutBack(t));
             resultPanel.transform.localScale = Vector3.one * scale;
 
             yield return null;
         }
 
-        // 약간 바운스
         elapsed = 0f;
         while (elapsed < 0.2f)
         {
@@ -368,13 +295,11 @@ public class RhythmGameManager : MonoBehaviour
             yield return null;
         }
 
-        // 최종 상태
         canvasGroup.alpha = 1f;
         resultPanel.transform.localScale = Vector3.one;
     }
 
-    // EaseOutBack 함수
-    float EaseOutBack(float t)
+    private float EaseOutBack(float t)
     {
         float c1 = 1.70158f;
         float c3 = c1 + 1f;
