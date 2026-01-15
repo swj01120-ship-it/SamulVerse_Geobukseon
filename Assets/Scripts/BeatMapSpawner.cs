@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class BeatMapSpawner : MonoBehaviour
 {
@@ -12,36 +13,83 @@ public class BeatMapSpawner : MonoBehaviour
     public Transform[] spawnPoints;
     public Transform[] targetPoints;
 
-    [Header("BeatMap")]
+    [Header("BeatMap (JSON)")]
     public TextAsset beatMapJson;
-    public float noteSpeed = 5f;
-    public float spawnOffset = 2f;
 
-    [Header("Spawn Control")]
-    public float stopSpawnBeforeSongEnd = 2f;
+    [Header("Movement/Timing")]
+    public float noteSpeed = 5f;
+    [Tooltip("노트 hit 시간보다 몇 초 먼저 스폰할지")]
+    public float spawnOffset = 2f;
 
     [Header("Debug")]
     public bool showDebugInfo = true;
 
-    private MusicManager musicManager;
-    private BeatMapData beatMapData;
-    private Queue<NoteData> upcomingNotes;
-
-    private bool isSpawning = false;
-    private bool spawningComplete = false;
-    private Coroutine spawnRoutine;
-
-    private void Awake()
+    // ===== JSON 전용 모델 (외부 클래스 의존 제거) =====
+    [Serializable]
+    private class BeatMapJsonData
     {
-        isSpawning = false;
-        spawningComplete = false;
+        public string songName;
+        public int difficulty;
+        public float bpm;
+        public List<BeatMapJsonNote> notes;
     }
+
+    [Serializable]
+    private class BeatMapJsonNote
+    {
+        public float time;   // hit time (sec)
+        public int drum;     // lane index
+        public string type;  // "note" / "obstacle"
+    }
+
+    private BeatMapJsonData _data;
+    private int _cursor;
+    private bool _started;
+    private bool _spawningComplete;
+    private Coroutine _co;
+
+    private double _dspStart = -1;
+
+    // ⭐ drumType 매핑
+    private static readonly string[] DRUM_TYPES = { "Jung", "Jang", "Book", "Jing" };
+
+    // ===============================
+    // ✅ 기존 프로젝트 호환 API
+    // ===============================
+
+    public void BeginSpawn()
+    {
+        HandleSongStart();
+    }
+
+    public bool IsSpawningComplete()
+    {
+        return _spawningComplete;
+    }
+
+    public void SetBeatMap(TextAsset newBeatMap)
+    {
+        beatMapJson = newBeatMap;
+        LoadBeatMap();
+    }
+
+    public void StopSpawning()
+    {
+        _started = false;
+        if (_co != null)
+        {
+            StopCoroutine(_co);
+            _co = null;
+        }
+    }
+
+    // ===============================
 
     private void OnEnable()
     {
+        MainGameAutoStartController.OnSongStart -= HandleSongStart;
         MainGameAutoStartController.OnSongStart += HandleSongStart;
 
-        // ✅ 이미 시작된 뒤에 켜져도 바로 스폰 시작
         if (MainGameAutoStartController.SongStarted)
             HandleSongStart();
     }
@@ -49,315 +97,191 @@ public class BeatMapSpawner : MonoBehaviour
     private void OnDisable()
     {
         MainGameAutoStartController.OnSongStart -= HandleSongStart;
+        StopSpawning();
     }
 
     private void Start()
     {
-        musicManager = MusicManager.Instance;
-        if (musicManager == null)
-        {
-            Debug.LogError("[BeatMapSpawner] MusicManager not found!");
-            return;
-        }
-
-        // 씬에 기본 비트맵이 할당돼 있으면 로드(없어도 OK)
-        if (beatMapJson != null)
-            LoadBeatMap();
-
-        if (beatMapData == null || beatMapData.notes == null || beatMapData.notes.Count == 0)
-        {
-            if (showDebugInfo)
-                Debug.LogWarning("[BeatMapSpawner] BeatMap empty/not loaded yet. (Will be injected per TrackData)");
-        }
-    }
-
-    public void SetBeatMap(TextAsset newBeatMap)
-    {
-        if (newBeatMap == null)
-        {
-            Debug.LogError("[BeatMapSpawner] SetBeatMap: newBeatMap is null!");
-            beatMapJson = null;
-            beatMapData = null;
-            upcomingNotes = null;
-            return;
-        }
-
-        beatMapJson = newBeatMap;
-        LoadBeatMap();
+        if (beatMapJson != null) LoadBeatMap();
     }
 
     private void HandleSongStart()
     {
-        BeginSpawn();
-    }
+        if (_started) return;
 
-    public void BeginSpawn()
-    {
-        if (isSpawning) return;
-
-        if (musicManager == null)
+        _dspStart = MainGameAutoStartController.SongStartDspTime;
+        if (_dspStart <= 0)
         {
-            musicManager = MusicManager.Instance;
-            if (musicManager == null)
-            {
-                Debug.LogError("[BeatMapSpawner] MusicManager not found!");
-                return;
-            }
+            _dspStart = AudioSettings.dspTime;
         }
 
-        // ✅ 필수 값 검증 (노트가 안 나오는 가장 흔한 원인)
-        if (notePrefab == null)
+        if (_data == null || _data.notes == null || _data.notes.Count == 0)
+            LoadBeatMap();
+
+        if (_data == null || _data.notes == null || _data.notes.Count == 0)
         {
-            Debug.LogError("[BeatMapSpawner] Note prefab not assigned!");
+            Debug.LogError("[BeatMapSpawner] BeatMap notes 비어있음. (JSON 파싱 실패/파일 미지정)");
             return;
         }
 
-        if (spawnPoints == null || targetPoints == null || spawnPoints.Length == 0 || targetPoints.Length == 0)
-        {
-            Debug.LogError("[BeatMapSpawner] spawnPoints/targetPoints not set!");
-            return;
-        }
+        _started = true;
+        _spawningComplete = false;
+        _cursor = 0;
 
-        if (spawnPoints.Length != targetPoints.Length)
-        {
-            Debug.LogError($"[BeatMapSpawner] spawnPoints({spawnPoints.Length}) != targetPoints({targetPoints.Length})");
-            return;
-        }
-
-        if (beatMapData == null || beatMapData.notes == null || beatMapData.notes.Count == 0)
-        {
-            Debug.LogError("[BeatMapSpawner] BeatMap is empty or not loaded!");
-            return;
-        }
-
-        isSpawning = true;
-        spawningComplete = false;
-
-        if (spawnRoutine != null) StopCoroutine(spawnRoutine);
-        spawnRoutine = StartCoroutine(SpawnFromBeatMap());
+        if (_co != null) StopCoroutine(_co);
+        _co = StartCoroutine(CoSpawnLoop());
 
         if (showDebugInfo)
-            Debug.Log($"[BeatMapSpawner] ✅ BeginSpawn() OK. Notes={beatMapData.notes.Count}, spawnOffset={spawnOffset}");
+            Debug.Log($"[BeatMapSpawner] START notes={_data.notes.Count}, dspStart={_dspStart:F4}, spawnOffset={spawnOffset:F2}");
     }
 
     private void LoadBeatMap()
     {
+        _data = null;
+        _cursor = 0;
+        _spawningComplete = false;
+
         if (beatMapJson == null)
         {
-            Debug.LogError("[BeatMapSpawner] BeatMap JSON not assigned!");
-            beatMapData = null;
-            upcomingNotes = null;
+            if (showDebugInfo) Debug.LogWarning("[BeatMapSpawner] beatMapJson is null (아직 주입 안 됨)");
+            return;
+        }
+
+        string raw = beatMapJson.text;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            Debug.LogError($"[BeatMapSpawner] BeatMap JSON empty: {beatMapJson.name}");
             return;
         }
 
         try
         {
-            beatMapData = JsonUtility.FromJson<BeatMapData>(beatMapJson.text);
-
-            if (beatMapData == null || beatMapData.notes == null)
+            string trimmed = raw.TrimStart();
+            if (trimmed.StartsWith("["))
             {
-                Debug.LogError($"[BeatMapSpawner] Failed to parse BeatMap JSON: {beatMapJson.name}");
+                raw = "{\"notes\":" + raw + "}";
+            }
+
+            _data = JsonUtility.FromJson<BeatMapJsonData>(raw);
+
+            if (_data == null || _data.notes == null)
+            {
+                Debug.LogError($"[BeatMapSpawner] JSON parse failed: {beatMapJson.name}");
+                _data = null;
                 return;
             }
 
-            beatMapData.notes.Sort((a, b) => a.time.CompareTo(b.time));
-            upcomingNotes = new Queue<NoteData>(beatMapData.notes);
+            _data.notes.Sort((a, b) => a.time.CompareTo(b.time));
 
             if (showDebugInfo)
-            {
-                Debug.Log($"[BeatMapSpawner] BeatMap loaded: {beatMapData.songName} (asset: {beatMapJson.name})");
-                Debug.Log($"[BeatMapSpawner] Total notes: {beatMapData.notes.Count}");
-                if (beatMapData.notes.Count > 0)
-                    Debug.Log($"[BeatMapSpawner] First note time: {beatMapData.notes[0].time:F2}s");
-            }
+                Debug.Log($"[BeatMapSpawner] Loaded: {beatMapJson.name} / notes={_data.notes.Count} / first={(_data.notes.Count > 0 ? _data.notes[0].time.ToString("F2") : "n/a")}");
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            Debug.LogError($"[BeatMapSpawner] Failed to load BeatMap: {e.Message}");
+            Debug.LogError($"[BeatMapSpawner] LoadBeatMap exception: {e}");
+            _data = null;
         }
     }
 
-    private IEnumerator SpawnFromBeatMap()
+    private IEnumerator CoSpawnLoop()
     {
-        float songLength = 9999f;
-        if (musicManager != null && musicManager.audioSource != null && musicManager.audioSource.clip != null)
-            songLength = musicManager.audioSource.clip.length;
-
-        float stopSpawnTime = songLength - stopSpawnBeforeSongEnd;
-
-        if (showDebugInfo)
+        while (_started && _data != null && _cursor < _data.notes.Count)
         {
-            Debug.Log($"[BeatMapSpawner] Start spawn. Song length: {songLength:F2}s");
-            Debug.Log($"[BeatMapSpawner] Stop spawn time: {stopSpawnTime:F2}s");
-        }
+            double elapsed = AudioSettings.dspTime - _dspStart;
+            var n = _data.notes[_cursor];
 
-        // 첫 노트가 너무 빠른 경우 보정(기존 로직)
-        if (beatMapData != null && beatMapData.notes != null && beatMapData.notes.Count > 0)
-        {
-            float firstNoteTime = beatMapData.notes[0].time;
-            if (firstNoteTime < spawnOffset)
+            double spawnTime = Math.Max(0.0, n.time - spawnOffset);
+
+            if (elapsed >= spawnTime)
             {
-                float waitTime = (spawnOffset - firstNoteTime) + 0.5f;
-                if (showDebugInfo) Debug.Log($"[BeatMapSpawner] Waiting {waitTime:F2}s for first note...");
-                yield return new WaitForSeconds(waitTime);
-            }
-        }
-
-        int spawnedCount = 0;
-        int totalNotes = beatMapData.notes.Count;
-
-        while (upcomingNotes != null && upcomingNotes.Count > 0 && isSpawning)
-        {
-            float currentTime = (musicManager != null) ? musicManager.songPosition : Time.timeSinceLevelLoad;
-
-            if (currentTime >= stopSpawnTime)
-            {
-                int remainingNotes = upcomingNotes.Count;
-                if (showDebugInfo)
-                {
-                    Debug.Log($"[BeatMapSpawner] Reached stop time ({stopSpawnTime:F2}s). Stopping spawn.");
-                    Debug.Log($"[BeatMapSpawner] Spawned {spawnedCount}/{totalNotes}, Skipped {remainingNotes}");
-                }
-                spawningComplete = true;
-                yield break;
-            }
-
-            NoteData nextNote = upcomingNotes.Peek();
-
-            if (currentTime >= nextNote.time - spawnOffset)
-            {
-                upcomingNotes.Dequeue();
-                SpawnNote(nextNote);
-                spawnedCount++;
-
-                if (showDebugInfo)
-                    Debug.Log($"[{spawnedCount}/{totalNotes}] Spawned {nextNote.type} at {currentTime:F2}s for drum {nextNote.drum}");
+                SpawnFromJson(n);
+                _cursor++;
+                continue;
             }
 
             yield return null;
         }
 
-        spawningComplete = true;
-        if (showDebugInfo) Debug.Log($"[BeatMapSpawner] Spawn complete: {spawnedCount}/{totalNotes}");
+        _spawningComplete = true;
+
+        if (showDebugInfo)
+            Debug.Log("[BeatMapSpawner] SpawnLoop finished.");
+        _co = null;
     }
 
-    private void SpawnNote(NoteData noteData)
+    private void SpawnFromJson(BeatMapJsonNote n)
     {
-        if (noteData.drum < 0 || noteData.drum >= spawnPoints.Length)
+        if (spawnPoints == null || targetPoints == null || spawnPoints.Length == 0 || targetPoints.Length == 0)
         {
-            Debug.LogError($"[BeatMapSpawner] Invalid drum index: {noteData.drum}");
+            Debug.LogError("[BeatMapSpawner] spawnPoints/targetPoints 비어있음");
             return;
         }
 
-        if (spawnPoints[noteData.drum] == null || targetPoints[noteData.drum] == null)
+        int max = Mathf.Min(spawnPoints.Length, targetPoints.Length);
+        int lane = Mathf.Clamp(n.drum, 0, max - 1);
+
+        bool isObstacle = !string.IsNullOrEmpty(n.type) && n.type.ToLower().Contains("obstacle");
+        GameObject prefab = isObstacle ? obstaclePrefab : notePrefab;
+
+        if (prefab == null)
         {
-            Debug.LogError($"[BeatMapSpawner] Spawn or target point {noteData.drum} is null!");
+            Debug.LogError("[BeatMapSpawner] notePrefab/obstaclePrefab 미지정");
             return;
         }
 
-        if (noteData.type == "obstacle")
-            SpawnObstacle(noteData.drum);
-        else
-            SpawnHitNote(noteData.drum);
+        Transform sp = spawnPoints[lane];
+        Transform tp = targetPoints[lane];
+
+        var go = Instantiate(prefab, sp.position, sp.rotation);
+
+        // ⭐ drumType 설정 (0=Jung, 1=Jang, 2=Book, 3=Jing)
+        string drumType = GetDrumType(lane);
+
+        // 프로젝트마다 Note 스크립트 필드명이 다를 수 있어 "있으면 세팅" 방식
+        TrySet(go, "targetPoint", tp);
+        TrySet(go, "target", tp);
+        TrySet(go, "targetPosition", tp.position);
+        TrySet(go, "speed", noteSpeed);
+        TrySet(go, "moveSpeed", noteSpeed);
+        TrySet(go, "noteSpeed", noteSpeed);
+        TrySet(go, "drumType", drumType); // ⭐ drumType 설정 추가!
+
+        if (showDebugInfo)
+            Debug.Log($"✅ [BeatMapSpawner] Spawn {(isObstacle ? "Obstacle" : "Note")} lane={lane} drumType={drumType} hitTime={n.time:F2}");
     }
 
-    private void SpawnHitNote(int drumIndex)
+    // ⭐ drumType 반환 메서드
+    private string GetDrumType(int drumIndex)
     {
-        GameObject noteObj = Instantiate(notePrefab, spawnPoints[drumIndex].position, Quaternion.identity);
-
-        Note note = noteObj.GetComponent<Note>();
-        if (note != null)
+        if (drumIndex >= 0 && drumIndex < DRUM_TYPES.Length)
         {
-            note.speed = noteSpeed;
-            note.targetPosition = targetPoints[drumIndex].position;
+            return DRUM_TYPES[drumIndex];
+        }
 
-            string[] drumTypes = { "Jung", "Jang", "Book", "Jing" };
-            if (drumIndex < drumTypes.Length)
-                note.drumType = drumTypes[drumIndex];
-        }
-        else
-        {
-            Debug.LogWarning("[BeatMapSpawner] Spawned notePrefab has no Note component.");
-        }
+        Debug.LogWarning($"[BeatMapSpawner] Invalid drumIndex={drumIndex}, defaulting to Jung");
+        return "Jung";
     }
 
-    private void SpawnObstacle(int drumIndex)
+    private static void TrySet(GameObject go, string memberName, object value)
     {
-        if (obstaclePrefab == null)
+        foreach (var c in go.GetComponents<MonoBehaviour>())
         {
-            Debug.LogWarning("[BeatMapSpawner] Obstacle prefab not assigned!");
-            return;
-        }
+            if (c == null) continue;
+            var t = c.GetType();
 
-        Vector3 obstaclePos = spawnPoints[drumIndex].position;
-        obstaclePos.y += 0.5f;
-
-        Vector3 playerTarget = GetPlayerObstacleTarget(drumIndex);
-        if (playerTarget == Vector3.zero)
-        {
-            Debug.LogError("[BeatMapSpawner] Could not find player camera!");
-            return;
-        }
-
-        GameObject obstacleObj = Instantiate(obstaclePrefab, obstaclePos, Quaternion.identity);
-        obstacleObj.name = $"Obstacle_ToPlayer_{drumIndex}";
-
-        Obstacle obstacle = obstacleObj.GetComponent<Obstacle>();
-        if (obstacle != null)
-        {
-            obstacle.speed = noteSpeed;
-            obstacle.targetPosition = playerTarget;
-        }
-    }
-
-    private Vector3 GetPlayerObstacleTarget(int drumIndex)
-    {
-        Transform playerCamera = null;
-
-        GameObject cameraRig = GameObject.Find("[BuildingBlock] Camera Rig");
-        if (cameraRig != null)
-        {
-            Transform trackingSpace = cameraRig.transform.Find("TrackingSpace");
-            if (trackingSpace != null)
-                playerCamera = trackingSpace.Find("CenterEyeAnchor");
-        }
-
-        if (playerCamera == null)
-        {
-            if (Camera.main == null)
+            var f = t.GetField(memberName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (f != null && f.FieldType.IsAssignableFrom(value.GetType()))
             {
-                Debug.LogError("[BeatMapSpawner] Cannot find player camera!");
-                return Vector3.zero;
+                f.SetValue(c, value);
+                return;
             }
-            playerCamera = Camera.main.transform;
+
+            var p = t.GetProperty(memberName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (p != null && p.CanWrite && p.PropertyType.IsAssignableFrom(value.GetType()))
+            {
+                p.SetValue(c, value, null);
+                return;
+            }
         }
-
-        Vector3 baseTarget = playerCamera.position;
-
-        switch (drumIndex)
-        {
-            case 0: baseTarget += playerCamera.right * -0.8f + Vector3.up * 0.3f; break;
-            case 1: baseTarget += playerCamera.right * -0.5f + Vector3.up * -0.1f; break;
-            case 2: baseTarget += playerCamera.right * 0.5f + Vector3.up * -0.1f; break;
-            case 3: baseTarget += playerCamera.right * 0.8f + Vector3.up * 0.3f; break;
-        }
-
-        return baseTarget;
-    }
-
-    public void StopSpawning()
-    {
-        isSpawning = false;
-        if (spawnRoutine != null)
-        {
-            StopCoroutine(spawnRoutine);
-            spawnRoutine = null;
-        }
-        Debug.Log("[BeatMapSpawner] Note spawning stopped!");
-    }
-
-    public bool IsSpawningComplete()
-    {
-        return spawningComplete;
     }
 }

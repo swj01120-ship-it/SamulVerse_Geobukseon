@@ -53,62 +53,139 @@ public class RhythmGameManager : MonoBehaviour
     private MusicManager musicManager;
     private BeatMapSpawner beatMapSpawner;
 
+    // ⭐ Update 호출 카운터
+    private int updateCount = 0;
+    private float lastLogTime = 0f;
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else { Destroy(gameObject); return; }
+
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Debug.Log("[RhythmGameManager] ⭐ Awake() - Instance Created!");
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
 
     private void OnEnable()
     {
-        // ✅ 영상 시작 타이밍에 게임 시작
+        Debug.Log("[RhythmGameManager] OnEnable() - Subscribing to OnSongStart");
         MainGameAutoStartController.OnSongStart += HandleSongStart;
+
+        // ⭐ 이미 노래가 시작된 경우 즉시 처리
+        if (MainGameAutoStartController.SongStarted && !gameStarted)
+        {
+            Debug.Log("[RhythmGameManager] ⚠️ Song already started! Catching up...");
+            HandleSongStart();
+        }
     }
 
     private void OnDisable()
     {
+        Debug.Log("[RhythmGameManager] OnDisable() - Unsubscribing from OnSongStart");
         MainGameAutoStartController.OnSongStart -= HandleSongStart;
     }
 
     private void Start()
     {
-        if (resultPanel != null) resultPanel.SetActive(false);
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Debug.Log("[RhythmGameManager] ⭐ Start()");
+
+        if (resultPanel != null)
+        {
+            resultPanel.SetActive(false);
+            Debug.Log($"[RhythmGameManager] ✅ Result Panel found: {resultPanel.name}");
+        }
+        else
+        {
+            Debug.LogError("[RhythmGameManager] ❌❌❌ resultPanel is NULL!");
+        }
 
         musicManager = MusicManager.Instance;
-        if (musicManager == null) musicManager = FindObjectOfType<MusicManager>();
+        if (musicManager == null)
+        {
+            musicManager = FindObjectOfType<MusicManager>();
+            Debug.LogWarning("[RhythmGameManager] MusicManager.Instance null, using FindObjectOfType");
+        }
+
+        if (musicManager != null)
+            Debug.Log($"[RhythmGameManager] ✅ MusicManager found");
+        else
+            Debug.LogError("[RhythmGameManager] ❌ MusicManager NOT FOUND!");
 
         beatMapSpawner = FindObjectOfType<BeatMapSpawner>();
+        if (beatMapSpawner != null)
+            Debug.Log($"[RhythmGameManager] ✅ BeatMapSpawner found");
+        else
+            Debug.LogWarning("[RhythmGameManager] ⚠️ BeatMapSpawner NOT FOUND!");
 
-        // 시작 전 상태로 고정
         gameStarted = false;
         isGameEnded = false;
+
+        Debug.Log($"[RhythmGameManager] gameStarted: {gameStarted}, isGameEnded: {isGameEnded}");
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         UpdateUI();
     }
 
     private void HandleSongStart()
     {
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Debug.Log("[RhythmGameManager] ⭐⭐⭐ HandleSongStart() CALLED!");
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         NotifyGameStarted();
     }
 
     public void NotifyGameStarted()
     {
         gameStarted = true;
-        Debug.Log("[RhythmGameManager] ✅ Game Started");
+        isGameEnded = false;
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Debug.Log("[RhythmGameManager] ✅✅✅ Game Started! gameStarted = TRUE");
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
 
     private void Update()
     {
-        if (!gameStarted) return;
+        updateCount++;
 
-        if (!isGameEnded && musicManager != null && musicManager.audioSource != null)
+        // ⭐ 5초마다 Update 작동 확인 로그
+        if (Time.time - lastLogTime > 5f)
         {
-            // 음악이 멈췄고(끝났고), 게임 시작 후 일정 시간 경과했을 때 종료 처리
-            if (!musicManager.audioSource.isPlaying && Time.timeSinceLevelLoad > 3f)
+            lastLogTime = Time.time;
+            Debug.Log($"[RhythmGameManager] Update() working! Count: {updateCount}, gameStarted: {gameStarted}, isGameEnded: {isGameEnded}");
+        }
+
+        if (!gameStarted || isGameEnded) return;
+
+        // ⭐ 음악 종료 감지
+        if (musicManager != null && musicManager.audioSource != null)
+        {
+            AudioSource audio = musicManager.audioSource;
+
+            // 음악이 재생 중이 아니고, 충분한 시간이 지났을 때
+            if (!audio.isPlaying && Time.timeSinceLevelLoad > 3f)
             {
-                if (beatMapSpawner != null && beatMapSpawner.IsSpawningComplete())
+                Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                Debug.Log("[RhythmGameManager] ⭐ Music stopped detected!");
+                Debug.Log($"isPlaying: {audio.isPlaying}, timeSinceLevelLoad: {Time.timeSinceLevelLoad:F2}");
+
+                // BeatMapSpawner 체크 (있으면)
+                bool spawningDone = true;
+                if (beatMapSpawner != null)
                 {
-                    Debug.Log("Music ended and all notes spawned. Ending game...");
+                    spawningDone = beatMapSpawner.IsSpawningComplete();
+                    Debug.Log($"[RhythmGameManager] Spawning complete: {spawningDone}");
+                }
+                else
+                {
+                    Debug.Log("[RhythmGameManager] No BeatMapSpawner, proceeding anyway");
+                }
+
+                if (spawningDone)
+                {
+                    Debug.Log("[RhythmGameManager] ✅ Starting EndGameWithDelay...");
+                    Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                     StartCoroutine(EndGameWithDelay());
                 }
             }
@@ -118,20 +195,28 @@ public class RhythmGameManager : MonoBehaviour
     private IEnumerator EndGameWithDelay()
     {
         isGameEnded = true;
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Debug.Log($"[RhythmGameManager] ⭐ EndGameWithDelay started (delay: {delayBeforeResults}s)");
 
         if (beatMapSpawner != null)
             beatMapSpawner.StopSpawning();
 
         yield return new WaitForSeconds(delayBeforeResults);
 
+        Debug.Log("[RhythmGameManager] Cleaning up remaining objects...");
+
         // 남은 노트 제거
         Note[] remainingNotes = FindObjectsOfType<Note>();
+        Debug.Log($"[RhythmGameManager] Removing {remainingNotes.Length} notes");
         foreach (Note note in remainingNotes) Destroy(note.gameObject);
 
         // 남은 장애물 제거
         Obstacle[] remainingObstacles = FindObjectsOfType<Obstacle>();
+        Debug.Log($"[RhythmGameManager] Removing {remainingObstacles.Length} obstacles");
         foreach (Obstacle obstacle in remainingObstacles) Destroy(obstacle.gameObject);
 
+        Debug.Log("[RhythmGameManager] ⭐⭐⭐ Calling ShowResults()...");
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         ShowResults();
     }
 
@@ -223,11 +308,27 @@ public class RhythmGameManager : MonoBehaviour
 
     public void ShowResults()
     {
-        if (resultPanel != null)
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Debug.Log("[RhythmGameManager] ⭐⭐⭐ ShowResults() CALLED!");
+        Debug.Log($"Score: {score}, Perfect: {perfectHits}, Good: {goodHits}, Miss: {missHits}");
+
+        if (resultPanel == null)
         {
-            resultPanel.SetActive(true);
-            StartCoroutine(AnimateResultPanel());
+            Debug.LogError("[RhythmGameManager] ❌❌❌ resultPanel is NULL!");
+            Debug.LogError("Inspector에서 RhythmGameManager → Result Panel에 할당 필요!");
+            Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            return;
         }
+
+        Debug.Log($"[RhythmGameManager] resultPanel found: {resultPanel.name}");
+        Debug.Log($"[RhythmGameManager] resultPanel active before: {resultPanel.activeSelf}");
+
+        resultPanel.SetActive(true);
+
+        Debug.Log($"[RhythmGameManager] resultPanel active after: {resultPanel.activeSelf}");
+        Debug.Log("[RhythmGameManager] ✅✅✅ Result Panel Activated!");
+
+        StartCoroutine(AnimateResultPanel());
 
         if (titleText != null) titleText.text = "GAME CLEAR!";
         if (resultScoreText != null) resultScoreText.text = $"SCORE: {score:N0}";
@@ -259,6 +360,8 @@ public class RhythmGameManager : MonoBehaviour
                     break;
             }
         }
+
+        Debug.Log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
 
     private IEnumerator AnimateResultPanel()

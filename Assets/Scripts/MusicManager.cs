@@ -30,10 +30,6 @@ public class MusicManager : MonoBehaviour
         if (Instance == null) Instance = this;
         else { Destroy(gameObject); return; }
 
-        // DontDestroyOnLoad는 선택사항.
-        // 씬마다 MusicManager가 하나씩 있다면 꺼두는 게 안전.
-        // DontDestroyOnLoad(gameObject);
-
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
 
@@ -45,7 +41,6 @@ public class MusicManager : MonoBehaviour
     {
         RecalcBeatInterval();
 
-        // ✅ 핵심: 자동재생 끔 (GameSceneController가 Start 버튼에서 PlayMusic 호출)
         if (autoPlayOnStart && backgroundMusic != null)
         {
             SetMusic(backgroundMusic, bpm);
@@ -62,9 +57,14 @@ public class MusicManager : MonoBehaviour
             songPosition = audioSource.time;
             currentBeat = (beatInterval > 0f) ? (int)(songPosition / beatInterval) : 0;
         }
-        else if (!songFinished && songPosition > 0f)
+        else if (!songFinished && songPosition > 0f && audioSource.clip != null)
         {
-            OnSongFinished();
+            // ⭐ 음악이 끝까지 재생되었는지 확인
+            if (songPosition >= audioSource.clip.length - 0.5f)
+            {
+                Debug.Log($"[MusicManager] Song ended: {songPosition:F2}s / {audioSource.clip.length:F2}s");
+                OnSongFinished();
+            }
         }
     }
 
@@ -73,7 +73,6 @@ public class MusicManager : MonoBehaviour
         beatInterval = (bpm > 0f) ? (60f / bpm) : 0.5f;
     }
 
-    // ✅ GameSceneController에서 호출할 세팅 함수
     public void SetMusic(AudioClip clip, float newBpm)
     {
         backgroundMusic = clip;
@@ -138,7 +137,8 @@ public class MusicManager : MonoBehaviour
     {
         songFinished = true;
 
-        Debug.Log("✅ SONG FINISHED!");
+        Debug.Log("✅ [MusicManager] SONG FINISHED!");
+
         if (!resultsShown)
         {
             resultsShown = true;
@@ -148,10 +148,16 @@ public class MusicManager : MonoBehaviour
 
     void ShowResults()
     {
+        Debug.Log("[MusicManager] Calling RhythmGameManager.ShowResults()");
+
         if (RhythmGameManager.Instance != null)
+        {
             RhythmGameManager.Instance.ShowResults();
+        }
         else
-            Debug.LogError("RhythmGameManager.Instance is null!");
+        {
+            Debug.LogError("[MusicManager] RhythmGameManager.Instance is null!");
+        }
     }
 
     public float GetTimeToNextBeat()
@@ -168,4 +174,3 @@ public class MusicManager : MonoBehaviour
         return timeSinceLastBeat < tolerance || timeSinceLastBeat > (bi - tolerance);
     }
 }
-

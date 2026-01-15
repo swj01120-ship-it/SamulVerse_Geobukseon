@@ -2,13 +2,19 @@ using UnityEngine;
 
 public class NoteStartSync : MonoBehaviour
 {
-    [Header("Start when song starts")]
-    public Behaviour[] enableOnStart; // BeatMapSpawner, RhythmGameManager, ComboSystem 등
+    [Header("Enable when song starts")]
+    public Behaviour[] enableOnStart;
 
-    private void Awake()
+    [Header("Disable when song ends (optional)")]
+    public Behaviour[] disableOnEnd;
+
+    [Header("Options")]
+    public bool disableEnableOnStartAtAwake = true;
+    public bool reEnableOnRestart = true;
+
+    void Awake()
     {
-        // 시작 전 OFF (원치 않으면 이 부분 제거 가능)
-        if (enableOnStart != null)
+        if (disableEnableOnStartAtAwake && enableOnStart != null)
         {
             for (int i = 0; i < enableOnStart.Length; i++)
                 if (enableOnStart[i] != null)
@@ -16,23 +22,40 @@ public class NoteStartSync : MonoBehaviour
         }
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
         MainGameAutoStartController.OnSongStart += HandleStart;
+        MainGameAutoStartController.OnSongEnd += HandleEnd;
+
+        // 씬 재진입/오브젝트 재활성화 시 이미 시작된 상태라면 즉시 반영
+        if (reEnableOnRestart && MainGameAutoStartController.SongStarted)
+            HandleStart();
+
+        if (MainGameAutoStartController.SongEnded)
+            HandleEnd();
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         MainGameAutoStartController.OnSongStart -= HandleStart;
+        MainGameAutoStartController.OnSongEnd -= HandleEnd;
     }
 
-    private void HandleStart()
+    void HandleStart()
     {
-        if (enableOnStart != null)
-        {
-            for (int i = 0; i < enableOnStart.Length; i++)
-                if (enableOnStart[i] != null)
-                    enableOnStart[i].enabled = true;
-        }
+        if (enableOnStart == null) return;
+
+        for (int i = 0; i < enableOnStart.Length; i++)
+            if (enableOnStart[i] != null)
+                enableOnStart[i].enabled = true;
+    }
+
+    void HandleEnd()
+    {
+        if (disableOnEnd == null) return;
+
+        for (int i = 0; i < disableOnEnd.Length; i++)
+            if (disableOnEnd[i] != null)
+                disableOnEnd[i].enabled = false;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
@@ -7,250 +8,247 @@ using UnityEngine.Video;
 public class MainGameAutoStartController : MonoBehaviour
 {
     [Header("TEST MODE")]
-    public bool forceStartForTest = true;      // ✅ 켜두면 선택 트랙 없어도 fallback으로 시작
-    public TrackData fallbackTrackForTest;     // ✅ MainGame 단독 테스트용 트랙
+    public bool forceStartForTest = true;
+    public TrackData fallbackTrackForTest;
 
-    [Header("Video Output")]
-    public VideoPlayer videoPlayer;
-    public RawImage gameVideoRawImage;         // ✅ VideoScreen의 RawImage 연결
-    public GameObject gameVideoRoot;           // (선택) 영상 루트 켜기/끄기
+    [Header("Audio")]
+    public AudioSource songAudioSource;
+    [Range(0f, 1f)] public float songVolume = 1.0f;
 
-    [Header("Ready UI")]
+    [Header("Ready UI (Legacy)")]
     public GameObject readyUI;
-    public Text readyCountText;               // Legacy Text
-    [Min(0f)] public float readySeconds = 1.0f;
+    public Text readyCountText;
+    [Min(0f)] public float readySeconds = 3.0f;
 
-    [Header("Gameplay Refs")]
+    [Header("Flow References (Optional)")]
     public BeatMapSpawner beatMapSpawner;
+    public VideoScreenManager videoScreenManager;
 
-    [Header("Safety")]
-    [Min(1f)] public float videoPrepareTimeoutSeconds = 10f;
+    [Header("Start Timing")]
+    [Tooltip("DSP 스케줄 시작까지 여유(초). 0.15~0.30 권장")]
+    public float scheduleLeadTime = 0.20f;
+
+    [Header("End Handling")]
+    public bool fireSongEndEvent = true;
+    [Tooltip("곡 끝난 뒤 OnSongEnd 발사까지 여유(초)")]
+    public float endGraceSeconds = 0.15f;
 
     [Header("Debug")]
     public bool verboseLog = true;
 
+    // ====== Global Events ======
     public static event Action OnSongStart;
+    public static event Action OnSongEnd;
 
-    // ✅ BeatMapSpawner 호환: 이미 시작됐는지 체크하는 플래그
-    public static bool SongStarted { get; private set; } = false;
+    public static bool SongStarted { get; private set; }
+    public static bool SongEnded { get; private set; }
+    public static double SongStartDspTime { get; private set; } = -1;
 
-    private bool started = false;
+    bool _starting;
+    Coroutine _endWatcher;
 
-    private void Awake()
+    void Awake()
     {
-        // Ready/UI/코루틴 멈춤 방지
         Time.timeScale = 1f;
         AudioListener.pause = false;
 
-        // 씬 재진입 시 초기화
-        started = false;
-        SongStarted = false;
-    }
-
-    private void OnEnable()
-    {
-        if (videoPlayer != null)
+        if (songAudioSource == null)
         {
-            videoPlayer.prepareCompleted -= OnPrepared;
-            videoPlayer.prepareCompleted += OnPrepared;
-
-            videoPlayer.errorReceived -= OnVideoError;
-            videoPlayer.errorReceived += OnVideoError;
+            songAudioSource = GetComponent<AudioSource>();
+            if (songAudioSource == null) songAudioSource = gameObject.AddComponent<AudioSource>();
         }
+
+        songAudioSource.playOnAwake = false;
+        songAudioSource.loop = false;
+
+        // 자동 참조
+        if (beatMapSpawner == null) beatMapSpawner = FindObjectOfType<BeatMapSpawner>();
+        if (videoScreenManager == null) videoScreenManager = FindObjectOfType<VideoScreenManager>();
     }
 
-    private void OnDisable()
-    {
-        if (videoPlayer != null)
-        {
-            videoPlayer.prepareCompleted -= OnPrepared;
-            videoPlayer.errorReceived -= OnVideoError;
-        }
-    }
-
-    private void Start()
+    void Start()
     {
         StartCoroutine(CoStartFlow());
     }
 
-    private IEnumerator CoStartFlow()
+    IEnumerator CoStartFlow()
     {
-        Time.timeScale = 1f;
-        AudioListener.pause = false;
+        if (_starting) yield break;
+        _starting = true;
 
-        // 1) 트랙 결정: 선택 트랙 우선, 없으면 fallback
-        TrackData track = null;
+        SongStarted = false;
+        SongEnded = false;
+        SongStartDspTime = -1;
 
-        if (GameManager.Instance != null)
-            track = GameManager.Instance.GetSelectedTrack();
-
-        if (track == null)
-            track = fallbackTrackForTest;
-
-        // 테스트 모드 OFF인데 트랙이 없으면 종료
-        if (!forceStartForTest && track == null)
-        {
-            Debug.LogError("[MainGameAutoStart] TrackData 없음 (선택 트랙이 null)");
-            yield break;
-        }
+        // 1) 트랙 확보
+        TrackData track = TryGetSelectedTrack();
+        if (track == null && forceStartForTest) track = fallbackTrackForTest;
 
         if (track == null)
         {
-            Debug.LogError("[MainGameAutoStart] fallbackTrackForTest를 인스펙터에 넣어야 테스트 가능");
+            Debug.LogError("[MainGameAutoStart] TrackData가 없습니다. (선택 트랙/테스트 트랙 모두 null)");
             yield break;
         }
 
-        if (verboseLog)
-            Debug.Log($"[MainGameAutoStart] Using Track: {track.name} / {track.trackName}");
+        // 2) TrackData에서 리소스 꺼내기 (필드명 달라도 대응)
+        AudioClip audioClip = TryGetFieldOrProperty<AudioClip>(track, "audioClip", "AudioClip", "musicClip", "songClip");
+        VideoClip videoClip = TryGetFieldOrProperty<VideoClip>(track, "gameVideo", "GameVideo", "videoClip", "VideoClip");
+        TextAsset beatMapJson = TryGetFieldOrProperty<TextAsset>(track, "beatMap", "BeatMap", "beatMapJson", "BeatMapJson", "beatMapText");
 
-        // 2) 스포너 찾기
-        if (beatMapSpawner == null)
-            beatMapSpawner = FindObjectOfType<BeatMapSpawner>();
+        if (audioClip == null)
+        {
+            Debug.LogError("[MainGameAutoStart] TrackData에서 AudioClip을 찾지 못했습니다. (audioClip 필드 확인)");
+            yield break;
+        }
 
-        // 3) Ready 카운트다운(언스케일)
+        // 3) BeatMap 주입 (스폰 시스템은 스폰 담당이 알아서 시작 이벤트를 받아서 시작)
+        if (beatMapSpawner != null && beatMapJson != null)
+        {
+            beatMapSpawner.SetBeatMap(beatMapJson);
+            if (verboseLog) Debug.Log($"[MainGameAutoStart] BeatMap injected: {beatMapJson.name}");
+        }
+        else if (beatMapSpawner == null)
+        {
+            Debug.LogWarning("[MainGameAutoStart] BeatMapSpawner를 찾지 못했습니다.");
+        }
+        else if (beatMapJson == null)
+        {
+            Debug.LogWarning("[MainGameAutoStart] BeatMap JSON이 null 입니다. (노트 스폰이 안 될 수 있음)");
+        }
+
+        // 4) Ready 카운트다운
         yield return CoReadyCountdownRealtime(readySeconds);
 
-        // 4) 비트맵 주입(가능하면)
-        if (beatMapSpawner != null)
+        // 5) 비디오 준비/재생은 VideoScreenManager “한 군데서만”
+        //    (여기서는 clip 전달만)
+        if (videoScreenManager != null && videoClip != null)
         {
-            if (track.beatMap != null)
-            {
-                beatMapSpawner.SetBeatMap(track.beatMap);
-                if (verboseLog) Debug.Log($"[MainGameAutoStart] BeatMap injected: {track.beatMap.name}");
-            }
-            else
-            {
-                Debug.LogWarning("[MainGameAutoStart] Track.beatMap이 null (노트 스폰 테스트 불가)");
-            }
+            videoScreenManager.Play(videoClip);
+            if (verboseLog) Debug.Log($"[MainGameAutoStart] VideoScreenManager.Play({videoClip.name})");
+        }
+        else if (videoClip == null)
+        {
+            if (verboseLog) Debug.LogWarning("[MainGameAutoStart] videoClip이 null이라 영상은 스킵합니다.");
         }
         else
         {
-            Debug.LogWarning("[MainGameAutoStart] BeatMapSpawner 없음 (노트 스폰 테스트 불가)");
+            Debug.LogWarning("[MainGameAutoStart] VideoScreenManager를 찾지 못했습니다.");
         }
 
-        // 5) 영상 재생
-        if (videoPlayer == null)
+        // 6) 음악 DSP 스케줄 시작
+        double dspNow = AudioSettings.dspTime;
+        double dspStart = dspNow + Mathf.Max(0.05f, scheduleLeadTime);
+
+        songAudioSource.clip = audioClip;
+        songAudioSource.volume = songVolume;
+        songAudioSource.PlayScheduled(dspStart);
+
+        SongStartDspTime = dspStart;
+
+        // 7) dspStart 시점에 “시작 이벤트” 발사(한 번만)
+        yield return new WaitUntil(() => AudioSettings.dspTime >= dspStart - 0.001);
+
+        SongStarted = true;
+        OnSongStart?.Invoke();
+
+        if (verboseLog) Debug.Log($"[MainGameAutoStart] OnSongStart fired. dspStart={dspStart:F4}");
+
+        // 8) 종료 감시(ResultUI 등이 OnSongEnd로 반응하도록)
+        if (fireSongEndEvent)
         {
-            Debug.LogError("[MainGameAutoStart] videoPlayer 미연결");
-            yield break;
+            if (_endWatcher != null) StopCoroutine(_endWatcher);
+            _endWatcher = StartCoroutine(CoWatchSongEnd());
         }
+    }
 
-        if (gameVideoRawImage == null)
+    IEnumerator CoWatchSongEnd()
+    {
+        // songAudioSource.timeSamples는 PlayScheduled 직후엔 0으로 머물 수 있음
+        // isPlaying + clip.length 기준으로 안정적으로 종료를 감지
+        var clip = (songAudioSource != null) ? songAudioSource.clip : null;
+        if (clip == null) yield break;
+
+        // 실제로 재생이 시작될 때까지 대기 (최대 몇 초)
+        float safety = 0f;
+        while (songAudioSource != null && !songAudioSource.isPlaying && safety < 10f)
         {
-            Debug.LogError("[MainGameAutoStart] gameVideoRawImage 미연결 (영상 출력 안됨)");
-            yield break;
-        }
-
-        if (track.gameVideo == null)
-        {
-            Debug.LogError("[MainGameAutoStart] Track.gameVideo가 null");
-            yield break;
-        }
-
-        if (gameVideoRoot != null) gameVideoRoot.SetActive(true);
-
-        videoPlayer.Stop();
-        videoPlayer.playOnAwake = false;
-        videoPlayer.isLooping = false;
-        videoPlayer.waitForFirstFrame = true;
-
-        // RawImage에 texture를 붙일 거라 APIOnly 권장
-        videoPlayer.renderMode = VideoRenderMode.APIOnly;
-        videoPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
-
-        gameVideoRawImage.texture = null;
-
-        videoPlayer.clip = track.gameVideo;
-        videoPlayer.Prepare();
-
-        float t = 0f;
-        while (!videoPlayer.isPrepared && t < videoPrepareTimeoutSeconds)
-        {
-            t += Time.unscaledDeltaTime;
+            safety += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        if (!videoPlayer.isPrepared)
-        {
-            Debug.LogError("[MainGameAutoStart] Video Prepare timeout");
-            yield break;
-        }
+        // 재생 종료 대기
+        while (songAudioSource != null && songAudioSource.isPlaying)
+            yield return null;
 
-        // prepareCompleted가 혹시 누락돼도 여기서 한번 더 강제 연결
-        if (videoPlayer.texture != null)
-            gameVideoRawImage.texture = videoPlayer.texture;
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, endGraceSeconds));
 
-        videoPlayer.Play();
-        if (verboseLog)
-            Debug.Log($"[MainGameAutoStart] Video Play() called. isPlaying={videoPlayer.isPlaying}");
+        SongEnded = true;
+        OnSongEnd?.Invoke();
 
-        // 6) 시작 신호 (이벤트 + SongStarted 세팅)
-        yield return null;
-        FireSongStartOnce();
-
-        // ✅ 테스트 목적: 이벤트를 놓치는 경우까지 배제하려고 스포너 직접 호출도 함께
-        if (beatMapSpawner != null && track.beatMap != null)
-        {
-            beatMapSpawner.BeginSpawn();
-            if (verboseLog) Debug.Log("[MainGameAutoStart] BeatMapSpawner.BeginSpawn() forced");
-        }
+        if (verboseLog) Debug.Log("[MainGameAutoStart] OnSongEnd fired.");
     }
 
-    private void OnPrepared(VideoPlayer vp)
-    {
-        if (gameVideoRawImage != null && vp != null && vp.texture != null)
-        {
-            gameVideoRawImage.texture = vp.texture;
-            if (verboseLog) Debug.Log("[MainGameAutoStart] Video texture assigned to RawImage");
-        }
-    }
-
-    private void OnVideoError(VideoPlayer vp, string msg)
-    {
-        Debug.LogError($"[MainGameAutoStart] Video error: {msg}");
-    }
-
-    private IEnumerator CoReadyCountdownRealtime(float seconds)
+    IEnumerator CoReadyCountdownRealtime(float seconds)
     {
         if (readyUI != null) readyUI.SetActive(true);
 
-        if (readyCountText == null)
+        float t = Mathf.Max(0f, seconds);
+        while (t > 0f)
         {
-            if (seconds > 0f) yield return new WaitForSecondsRealtime(seconds);
-            if (readyUI != null) readyUI.SetActive(false);
-            yield break;
+            if (readyCountText != null)
+                readyCountText.text = Mathf.CeilToInt(t).ToString();
+
+            yield return new WaitForSecondsRealtime(1f);
+            t -= 1f;
         }
 
-        float remain = Mathf.Max(0f, seconds);
-        int lastInt = int.MinValue;
-
-        while (remain > 0f)
-        {
-            int cur = Mathf.CeilToInt(remain);
-            if (cur != lastInt)
-            {
-                readyCountText.text = cur.ToString();
-                lastInt = cur;
-            }
-
-            remain -= Time.unscaledDeltaTime;
-            yield return null;
-        }
-
-        readyCountText.text = "GO";
+        if (readyCountText != null) readyCountText.text = "GO";
         yield return new WaitForSecondsRealtime(0.2f);
 
         if (readyUI != null) readyUI.SetActive(false);
     }
 
-    private void FireSongStartOnce()
+    TrackData TryGetSelectedTrack()
     {
-        if (started) return;
-        started = true;
+        // GameManager가 있을 때만 사용 (없으면 null)
+        try
+        {
+            var gmType = Type.GetType("GameManager");
+            if (gmType == null) return null;
 
-        SongStarted = true;            // ✅ BeatMapSpawner가 OnEnable에서 확인
-        OnSongStart?.Invoke();
+            var instProp = gmType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
+            var inst = instProp?.GetValue(null, null);
+            if (inst == null) return null;
 
-        if (verboseLog) Debug.Log("[MainGameAutoStart] ✅ OnSongStart fired");
+            var getSel = gmType.GetMethod("GetSelectedTrack", BindingFlags.Public | BindingFlags.Instance);
+            if (getSel == null) return null;
+
+            return getSel.Invoke(inst, null) as TrackData;
+        }
+        catch { return null; }
+    }
+
+    static T TryGetFieldOrProperty<T>(object obj, params string[] names) where T : class
+    {
+        if (obj == null) return null;
+
+        var t = obj.GetType();
+        foreach (var n in names)
+        {
+            var f = t.GetField(n, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (f != null)
+            {
+                var v = f.GetValue(obj) as T;
+                if (v != null) return v;
+            }
+
+            var p = t.GetProperty(n, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (p != null)
+            {
+                var v = p.GetValue(obj, null) as T;
+                if (v != null) return v;
+            }
+        }
+        return null;
     }
 }
