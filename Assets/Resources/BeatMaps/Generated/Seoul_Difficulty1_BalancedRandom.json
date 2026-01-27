@@ -1,0 +1,987 @@
+{
+    "bpm": 128.0,
+    "songName": "Seoul",
+    "difficulty": 1,
+    "notes": [
+        {
+            "time": 3.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 3.46875,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 3.9375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 4.40625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 4.875,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 5.34375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 5.8125,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 6.28125,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 6.75,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 7.21875,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 7.6875,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 8.15625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 8.625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 9.09375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 9.5625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 10.03125,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 10.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 10.96875,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 11.4375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 11.90625,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 12.375,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 12.84375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 13.3125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 13.78125,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 14.25,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 14.71875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 15.1875,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 15.65625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 16.125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 16.59375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 17.0625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 17.53125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 18.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 18.46875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 18.9375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 19.40625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 19.875,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 20.34375,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 20.8125,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 21.28125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 21.75,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 22.21875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 22.6875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 23.15625,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 23.625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 24.09375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 24.5625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 25.03125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 25.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 25.96875,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 26.4375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 26.90625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 27.375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 27.84375,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 28.3125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 28.78125,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 29.25,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 29.71875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 30.1875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 30.65625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 31.125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 31.59375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 32.0625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 32.53125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 33.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 33.46875,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 33.9375,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 34.40625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 34.875,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 35.34375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 35.8125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 36.28125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 36.75,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 37.21875,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 37.6875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 38.15625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 38.625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 39.09375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 39.5625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 40.03125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 40.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 40.96875,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 41.4375,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 41.90625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 42.375,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 42.84375,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 43.3125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 43.78125,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 44.25,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 44.71875,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 45.1875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 45.65625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 46.125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 46.59375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 47.0625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 47.53125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 48.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 48.46875,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 48.9375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 49.40625,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 49.875,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 50.34375,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 50.8125,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 51.28125,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 51.75,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 52.21875,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 52.6875,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 53.15625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 53.625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 54.09375,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 54.5625,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 55.03125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 55.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 55.96875,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 56.4375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 56.90625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 57.375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 57.84375,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 58.3125,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 58.78125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 59.25,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 59.71875,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 60.1875,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 60.65625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 61.125,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 61.59375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 62.0625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 62.53125,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 63.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 63.46875,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 63.9375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 64.40625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 64.875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 65.34375,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 65.8125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 66.28125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 66.75,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 67.21875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 67.6875,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 68.15625,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 68.625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 69.09375,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 69.5625,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 70.03125,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 70.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 70.96875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 71.4375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 71.90625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 72.375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 72.84375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 73.3125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 73.78125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 74.25,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 74.71875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 75.1875,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 75.65625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 76.125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 76.59375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 77.0625,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 77.53125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 78.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 78.46875,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 78.9375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 79.40625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 79.875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 80.34375,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 80.8125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 81.28125,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 81.75,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 82.21875,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 82.6875,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 83.15625,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 83.625,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 84.09375,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 84.5625,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 85.03125,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 85.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 85.96875,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 86.4375,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 86.90625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 87.375,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 87.84375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 88.3125,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 88.78125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 89.25,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 89.71875,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 90.1875,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 90.65625,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 91.125,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 91.59375,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 92.0625,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 92.53125,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 93.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 93.46875,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 93.9375,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 94.40625,
+            "drum": 1,
+            "type": "hit"
+        }
+    ]
+}

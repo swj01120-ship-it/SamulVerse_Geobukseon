@@ -1,0 +1,1087 @@
+{
+    "bpm": 120.0,
+    "songName": "Q설날",
+    "difficulty": 1,
+    "notes": [
+        {
+            "time": 3.0,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 3.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 4.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 4.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 5.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 5.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 6.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 6.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 7.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 7.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 8.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 8.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 9.0,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 9.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 10.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 10.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 11.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 11.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 12.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 12.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 13.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 13.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 14.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 14.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 15.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 15.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 16.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 16.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 17.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 17.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 18.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 18.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 19.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 19.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 20.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 20.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 21.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 21.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 22.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 22.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 23.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 23.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 24.0,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 24.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 25.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 25.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 26.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 26.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 27.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 27.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 28.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 28.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 29.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 29.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 30.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 30.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 31.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 31.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 32.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 32.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 33.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 33.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 34.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 34.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 35.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 35.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 36.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 36.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 37.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 37.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 38.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 38.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 39.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 39.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 40.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 40.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 41.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 41.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 42.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 42.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 43.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 43.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 44.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 44.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 45.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 45.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 46.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 46.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 47.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 47.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 48.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 48.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 49.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 49.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 50.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 50.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 51.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 51.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 52.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 52.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 53.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 53.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 54.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 54.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 55.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 55.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 56.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 56.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 57.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 57.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 58.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 58.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 59.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 59.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 60.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 60.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 61.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 61.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 62.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 62.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 63.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 63.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 64.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 64.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 65.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 65.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 66.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 66.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 67.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 67.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 68.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 68.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 69.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 69.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 70.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 70.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 71.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 71.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 72.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 72.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 73.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 73.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 74.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 74.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 75.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 75.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 76.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 76.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 77.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 77.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 78.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 78.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 79.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 79.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 80.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 80.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 81.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 81.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 82.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 82.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 83.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 83.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 84.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 84.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 85.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 85.5,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 86.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 86.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 87.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 87.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 88.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 88.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 89.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 89.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 90.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 90.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 91.0,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 91.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 92.0,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 92.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 93.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 93.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 94.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 94.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 95.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 95.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 96.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 96.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 97.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 97.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 98.0,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 98.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 99.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 99.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 100.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 100.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 101.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 101.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 102.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 102.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 103.0,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 103.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 104.0,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 104.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 105.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 105.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 106.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 106.5,
+            "drum": 2,
+            "type": "hit"
+        },
+        {
+            "time": 107.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 107.5,
+            "drum": 0,
+            "type": "hit"
+        },
+        {
+            "time": 108.0,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 108.5,
+            "drum": 3,
+            "type": "hit"
+        },
+        {
+            "time": 109.0,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 109.5,
+            "drum": 1,
+            "type": "hit"
+        },
+        {
+            "time": 110.0,
+            "drum": -1,
+            "type": "obstacle"
+        },
+        {
+            "time": 110.5,
+            "drum": 0,
+            "type": "hit"
+        }
+    ]
+}
