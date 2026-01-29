@@ -140,10 +140,12 @@ git clone https://github.com/swj0120-ship-it/SamulVerse_Geobukseon.git
 - [x] UI/UX 개선
 - [X] 튜토리얼 시스템
 - [X] 곡 선택 메뉴
+- [X] 2차 FGT평가
+  
 
 ### 🔄 진행 중
 
-- [ ] 2차 FGT평가
+
 
 ### 📋 예정
 
@@ -166,13 +168,7 @@ git clone https://github.com/swj0120-ship-it/SamulVerse_Geobukseon.git
 
 ## 🐛 알려진 이슈
 
-1. **ComboSystem 파티클 문제** (임시 비활성화)
-   - 콤보 파티클이 노트 생성 시 함께 생성됨
-   - 추후 수정 예정
 
-2. **Android 최적화**
-   - Quest 2 프레임 드롭 간헐적 발생
-   - 텍스처 최적화 진행 중
 
 ---
 
