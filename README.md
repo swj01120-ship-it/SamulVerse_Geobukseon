@@ -69,19 +69,40 @@
 SamulVerse_Geobukseon/
 ├── Assets/
 │   ├── Scenes/
-│   │   └── HandTracking_Main.unity
+│   │   └── Home.unity
+│   │   └── Intro.unity
+│   │   └── MainGame.unity
+│   │   └── Tutorial.unity
 │   ├── Scripts/
 │   │   ├── Core/
 │   │   │   ├── RhythmGameManager.cs
 │   │   │   ├── MusicManager.cs
 │   │   │   └── ComboSystem.cs
+│   │   │   └── AppUIRouter.cs
+│   │   │   └── AudioManager.cs
+│   │   │   └── BGMMangager.cs
+│   │   │   └── CanvasLocker.cs
+│   │   │   └── CylinderRotator.cs
+│   │   │   └── GameManager.cs
+│   │   │   └── NpcGroupSongStartTrigger.cs
+│   │   │   └── PauseManager.cs
+│   │   │   └── TutorialManager.cs
+│   │   │   └── VideoScreenManager.cs
 │   │   ├── Gameplay/
 │   │   │   ├── Note.cs
 │   │   │   ├── Obstacle.cs
 │   │   │   └── DrumHit.cs
+│   │   │   └── FloatingShip.cs
+│   │   │   └── DrumHit.cs
+│   │   │   └── PaddleRigControllerSyncToAnimator.cs
+│   │   │   └── SkyboxDriver.cs
+│   │   │   └── VRRayPointer.cs
 │   │   └── BeatMap/
 │   │       ├── BeatMapSpawner.cs
 │   │       ├── BeatMapCreator.cs
+│   │       └── ProceduralBeatMapGenerator.cs
+│   │       └── AutoBeatMapGenerator.cs
+│   │       └── BeatMapTandomizer.cs
 │   │       └── ProceduralBeatMapGenerator.cs
 │   ├── Prefabs/
 │   └── Resources/
